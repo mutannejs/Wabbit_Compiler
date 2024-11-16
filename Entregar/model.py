@@ -1,19 +1,22 @@
 from typing import Literal
 
 
-OpUnType = Literal['+', '-']
-OperatorsUn = ['+', '-']
-OpBinType = Literal['+', '-', '/', '*', '<', '>', '&&', '||']
-OperatorsBin = ['+', '-', '/', '*', '<', '>', '&&', '||']
-MutType = Literal['var', 'const']
-Dtype = int | float | bool
-BoolType = Literal['true', 'false']
+UnOperators = ['+', '-']
+BinOperators = ['+', '-', '/', '*', '<', '>', '&&', '||']
+DataTypes = ['int', 'float', 'bool']
+
+OpUnType = Literal[*UnOperators]
+OpBinType = Literal[*BinOperators]
+DType = Literal[*DataTypes]
 
 
 class Node:
     pass
 
 class Statement(Node):
+    pass
+
+class Expression(Node):
     pass
 
 class BlockStatement(Node):
@@ -31,9 +34,6 @@ class BlockStatement(Node):
     def __repr__(self):
         return f'BlockStatement({self.statements})'
 
-class Expression(Node):
-    pass
-
 class Char(Expression):
     '''
     Example: 'h'
@@ -44,7 +44,7 @@ class Char(Expression):
         self.value = value
 
     def __repr__(self):
-        return f'Char(\'{self.value}\')'
+        return f'Char({repr(self.value)})'
 
 class Integer(Expression):
     '''
@@ -72,8 +72,8 @@ class Bool(Expression):
     '''
     Example: true
     '''
-    def __init__(self, value: BoolType):
-        assert value in ['true', 'false']
+    def __init__(self, value: bool):
+        assert type(value) == bool
         self.value = value
 
     def __repr__(self):
@@ -94,8 +94,8 @@ class UnOp(Expression):
     '''
     Example: -5
     '''
-    def __init__(self, op: OpUnType, expr: Expression):
-        assert op in OperatorsUn
+    def __init__(self, op: OpUnType, expr: Expression): # type: ignore
+        assert op in UnOperators
         assert isinstance(expr, Expression)
         self.op = op
         self.expr = expr
@@ -108,8 +108,8 @@ class BinOp(Expression):
     Example: 3 + 4
     Example: a < 100.0
     '''
-    def __init__(self, op: OpBinType, left: Expression, right: Expression):
-        assert op in OperatorsBin
+    def __init__(self, op: OpBinType, left: Expression, right: Expression): # type: ignore
+        assert op in BinOperators
         assert isinstance(left, Expression)
         assert isinstance(right, Expression)
         self.op = op
@@ -129,22 +129,35 @@ class Location(Expression):
     def __repr__(self):
         return f'Location(\'{self.name}\')'
 
-class Declaration(Statement):
+class DeclarationVar(Statement):
     '''
     var c bool = true;
     '''
-    def __init__(self, mut: MutType, location: Location, dtype: Dtype = None, value: Expression = None):
-        assert mut in ['var', 'const']
+    def __init__(self, location: Location, dtype: DType = None, value: Expression = None): # type: ignore
         assert isinstance(location, Location)
-        if dtype: assert (dtype, Dtype)
+        if dtype: assert dtype in DataTypes
         if value: assert isinstance(value, Expression)
-        self.mut = mut
         self.location = location
         self.dtype = dtype
         self.value = value
 
     def __repr__(self):
-        return f'Declaration(\'{self.mut}\', {self.location}, {self.dtype}, {self.value})'
+        return f'DeclarationVar({self.location}, {self.dtype}, {self.value})'
+
+class DeclarationConst(Statement):
+    '''
+    const c = true;
+    '''
+    def __init__(self, location: Location, dtype: DType = None, value: Expression = None): # type: ignore
+        assert isinstance(location, Location)
+        if dtype: assert dtype in DataTypes
+        if value: assert isinstance(value, Expression)
+        self.location = location
+        self.dtype = dtype
+        self.value = value
+
+    def __repr__(self):
+        return f'DeclarationConst({self.location}, {self.dtype}, {self.value})'
 
 class Assignment(Statement):
     '''
@@ -201,3 +214,77 @@ class CompoundExpression(Expression):
 
     def __repr__(self):
         return f'CompoundExpression({self.instructions}'
+
+
+class NodeVisitor:
+    def __init__(self):
+        pass
+
+    def visit(self, node: Node):
+        methname = node.__class__.__name__
+        return getattr(self, f'visit_{methname}')(node)
+
+    def visit_BlockStatement(self, node: BlockStatement):
+        tabs = ''.rjust(node.tabs * 4, ' ')
+
+        sttmts = ''
+        for st in node.statements:
+            sttmts += tabs + self.visit(st) + '\n'
+        return sttmts
+
+    def visit_Integer(self, node: Integer):
+        return node.value
+
+    def visit_Float(self, node: Float):
+        return node.value
+
+    def visit_Char(self, node: Char):
+        return repr(node.value)
+
+    def visit_Bool(self, node: Char):
+        return f'{node.value}'
+
+    def visit_Print(self, node: Print):
+        return f'print {self.visit(node.expr)};'
+
+    def visit_UnOp(self, node: UnOp):
+        return f'{node.op}{self.visit(node.expr)}'
+
+    def visit_BinOp(self, node: BinOp):
+        return f'{self.visit(node.left)} {node.op} {self.visit(node.right)}'
+
+    def visit_Location(self, node: Location):
+        return f'{node.name}'
+
+    def visit_DeclarationVar(self, node: DeclarationVar):
+        base = f'var {self.visit(node.location)}'
+        dtype = f' {node.dtype}' if node.dtype != None else ''
+        value = f' = {self.visit(node.value)}' if node.value != None else ''
+        return base + dtype + value + ';'
+
+    def visit_DeclarationConst(self, node: DeclarationConst):
+        base = f'const {self.visit(node.location)}'
+        dtype = f' {node.dtype}' if node.dtype != None else ''
+        value = f' = {self.visit(node.value)}' if node.value != None else ''
+        return base + dtype + value + ';'
+
+    def visit_Assignment(self, node: Assignment):
+        return f'{self.visit(node.location)} = {self.visit(node.value)};'
+
+    def visit_IfStatement(self, node: IfStatement):
+        block_if = f'if {self.visit(node.cmp)} {{\n{self.visit(node.block_if)}}}'
+        block_else = f' else {{\n{self.visit(node.block_else)}}}' if node.block_else else ''
+        return block_if + block_else
+
+    def visit_WhileStatement(self, node: WhileStatement):
+        return f'while {self.visit(node.cmp)} {{\n{self.visit(node.body)}}}'
+
+    def visit_CompoundExpression(self, node: CompoundExpression):
+        insts = ''
+        for inst in node.instructions:
+            insts += ' ' + self.visit(inst)
+        return f'{{{insts}; }}'
+
+
+def to_source(node):
+    return NodeVisitor().visit(node)

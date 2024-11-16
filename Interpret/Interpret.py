@@ -1,13 +1,13 @@
 from functools import singledispatch
 from typing import Any, List, Dict
 
-from Model.Structs import *
+from Model.Model import *
 
 
 class EnvDataType():
-    def __init__(self, value: Any, mut: MutType, dtype: Dtype):
+    def __init__(self, value: Any, changeble: bool, dtype: DType): # type: ignore
         self.value = value
-        self.mut = mut
+        self.chang = changeble
         self.dtype = dtype
 
 EnvType = List[Dict[str, EnvDataType]]
@@ -76,8 +76,9 @@ def _interpret_location(node: Location, env: EnvType):
         if node.name in env[i].keys():
             return env[i].get(node.name)
 
-@rule(Declaration)
-def _interpret_declaration(node: Declaration, env: EnvType):
+@rule(DeclarationVar)
+@rule(DeclarationConst)
+def _interpret_declaration(node: DeclarationVar | DeclarationConst, env: EnvType):
     name = node.location.name
     dtype = value = None
 
@@ -88,7 +89,8 @@ def _interpret_declaration(node: Declaration, env: EnvType):
     if dtype == None:
         dtype = node.dtype
 
-    env[-1][name] = EnvDataType(value, node.mut, dtype)
+    changeble = True if isinstance(node, DeclarationConst) else False
+    env[-1][name] = EnvDataType(value, changeble, dtype)
 
 @rule(Assignment)
 def _interpret_assignment(node: Assignment, env: EnvType):

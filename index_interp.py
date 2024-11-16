@@ -1,12 +1,13 @@
-from Model.Structs import *
+from Model.Model import *
 from Interpret.Interpret import *
+# from Entregar.interp import *
 
 
 def printEx(count: int, expr_source: str, expr_model: Node):
     print(f'===Teste número {count} =================================')
     print(f'*expr_source:\n{expr_source}')
     print()
-    print(f'*expr_model:')
+    print(f'*expr_interp:')
     interpret_program(expr_model)
     print()
 
@@ -30,7 +31,10 @@ m2 = Print(
 printEx(2, s2, m2)
 
 # Exemplo 3
-s3 = "print 'x';\nprint '\\n';"
+s3 = '''
+    print 'x';
+    print '\n';
+'''
 m3 = BlockStatement([
     Print( Char('x') ),
     Print( Char('\n') )
@@ -38,15 +42,16 @@ m3 = BlockStatement([
 printEx(3, s3, m3)
 
 # Exemplo 4
-s4 = "const pi = 3.14159;\nconst tau = 2.0 * pi;"
+s4 = '''
+    const pi = 3.14159;
+    const tau = 2.0 * pi;
+'''
 m4 = BlockStatement([
-    Declaration(
-        'const',
+    DeclarationConst(
         Location('pi'),
         value= Float(3.14159)
     ),
-    Declaration(
-        'const',
+    DeclarationConst(
         Location('tau'),
         value= BinOp(
             '*',
@@ -69,8 +74,8 @@ s5 = '''
     }
 '''
 m5 = BlockStatement([
-    Declaration('var', Location('a'), int, Integer(2)),
-    Declaration('var', Location('b'), int, Integer(3)),
+    DeclarationVar(Location('a'), 'int', Integer(2)),
+    DeclarationVar(Location('b'), 'int', Integer(3)),
     IfStatement(
         BinOp('<', Location('a'), Location('b')),
         BlockStatement([
@@ -96,9 +101,9 @@ s6 = '''
     }
 '''
 m6 = BlockStatement([
-    Declaration('const', Location('n'), value=Integer(10)),
-    Declaration('var', Location('x'), int, Integer(1)),
-    Declaration('var', Location('fact'), int, Integer(1)),
+    DeclarationConst(Location('n'), value=Integer(10)),
+    DeclarationVar(Location('x'), 'int', Integer(1)),
+    DeclarationVar(Location('fact'), 'int', Integer(1)),
     WhileStatement(
         BinOp('<', Location('x'), Location('n')),
         BlockStatement([
@@ -125,12 +130,12 @@ s7 = '''
     print y;
 '''
 m7 = BlockStatement([
-    Declaration('var', Location('x'), value=Integer(37)),
-    Declaration('var', Location('y'), value=Integer(42)),
+    DeclarationVar(Location('x'), value=Integer(37)),
+    DeclarationVar(Location('y'), value=Integer(42)),
     Assignment(
         Location('x'),
         CompoundExpression([
-            Declaration('var', Location('t'), value=Location('y')),
+            DeclarationVar(Location('t'), value=Location('y')),
             Assignment(Location('y'), Location('x')),
             Location('t')
         ])

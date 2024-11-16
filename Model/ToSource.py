@@ -1,4 +1,4 @@
-from .Structs import *
+from .Model import *
 
 class NodeVisitor:
     def __init__(self):
@@ -23,7 +23,7 @@ class NodeVisitor:
         return node.value
 
     def visit_Char(self, node: Char):
-        return f'\'{node.value}\''
+        return repr(node.value)
 
     def visit_Bool(self, node: Char):
         return f'{node.value}'
@@ -40,8 +40,14 @@ class NodeVisitor:
     def visit_Location(self, node: Location):
         return f'{node.name}'
 
-    def visit_Declaration(self, node: Declaration):
-        base = f'{node.mut} {self.visit(node.location)}'
+    def visit_DeclarationVar(self, node: DeclarationVar):
+        base = f'var {self.visit(node.location)}'
+        dtype = f' {node.dtype}' if node.dtype != None else ''
+        value = f' = {self.visit(node.value)}' if node.value != None else ''
+        return base + dtype + value + ';'
+
+    def visit_DeclarationConst(self, node: DeclarationConst):
+        base = f'const {self.visit(node.location)}'
         dtype = f' {node.dtype}' if node.dtype != None else ''
         value = f' = {self.visit(node.value)}' if node.value != None else ''
         return base + dtype + value + ';'
