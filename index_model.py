@@ -1,6 +1,5 @@
-# from Model.Structs import *
-# from Model.ToSource import *
-from Entregar.model import *
+from src.model import *
+from src.to_source import to_source
 
 
 def printEx(count: int, expr_source: str, expr_model: Node):

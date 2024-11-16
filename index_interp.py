@@ -1,6 +1,4 @@
-from Model.Model import *
-from Interpret.Interpret import *
-# from Entregar.interp import *
+from src.interp import *
 
 
 def printEx(count: int, expr_source: str, expr_model: Node):
@@ -112,7 +110,6 @@ m6 = BlockStatement([
                 BinOp('*', Location('fact'), Location('x'))
             ),
             Print(Location('fact')),
-            Print(Char('\n')),
             Assignment(
                 Location('x'),
                 BinOp('+', Location('x'), Integer(1))

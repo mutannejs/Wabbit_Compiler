@@ -1,6 +1,6 @@
-from .Model import *
+from .model import *
 
-class NodeVisitor:
+class _NodeVisitor:
     def __init__(self):
         pass
 
@@ -71,4 +71,4 @@ class NodeVisitor:
 
 
 def to_source(node):
-    return NodeVisitor().visit(node)
+    return _NodeVisitor().visit(node)

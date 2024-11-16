@@ -1,7 +1,7 @@
 from functools import singledispatch
 from typing import Any, List, Dict
 
-from Model.Model import *
+from .model import *
 
 
 class EnvDataType():
@@ -42,7 +42,7 @@ def _interpret_blockstatement_(node: BlockStatement, env: EnvType):
 
 @rule(Print)
 def _interpret_print(node: Print, env):
-    print(_getValue(node.expr, env), end='')
+    print(_getValue(node.expr, env))
 
 @rule(UnOp)
 def _interpret_unop(node: UnOp, env: EnvType):
