@@ -1,13 +1,13 @@
 from typing import Literal
 
 
-UnOperators = ['+', '-']
-BinOperators = ['+', '-', '/', '*', '<', '>', '&&', '||']
-DataTypes = ['int', 'float', 'bool']
+UnOperators = ['+', '-', '!']
+BinOperators = ['+', '-', '/', '*', '<', '>', '<=', '>=', '==', '!=', '&&', '||']
+DataTypes = ['int', 'float', 'bool', 'unit']
 
-OpUnType = Literal[*UnOperators]
-OpBinType = Literal[*BinOperators]
-DType = Literal[*DataTypes]
+OpUnType = Literal['+', '-', '!']
+OpBinType = Literal['+', '-', '/', '*', '<', '>', '<=', '>=', '==', '!=', '&&', '||']
+DType = Literal['int', 'float', 'bool', 'unit']
 
 
 class Node:
@@ -17,6 +17,9 @@ class Statement(Node):
     pass
 
 class Expression(Node):
+    pass
+
+class Definition(Node):
     pass
 
 class BlockStatement(Node):
@@ -77,7 +80,17 @@ class Bool(Expression):
         self.value = value
 
     def __repr__(self):
-        return f'{self.value}'
+        return 'true' if self.value else 'false'
+
+class Unit(Expression):
+    '''
+    Example: ()
+    '''
+    def __init__(self):
+        pass
+
+    def __repr__(self):
+        return '()'
 
 class Print(Statement):
     '''
@@ -133,7 +146,7 @@ class DeclarationVar(Statement):
     '''
     var c bool = true;
     '''
-    def __init__(self, location: Location, dtype: DType = None, value: Expression = None): # type: ignore
+    def __init__(self, location: Location, value: Expression = None, dtype: DType = None): # type: ignore
         assert isinstance(location, Location)
         if dtype: assert dtype in DataTypes
         if value: assert isinstance(value, Expression)
@@ -148,10 +161,10 @@ class DeclarationConst(Statement):
     '''
     const c = true;
     '''
-    def __init__(self, location: Location, dtype: DType = None, value: Expression = None): # type: ignore
+    def __init__(self, location: Location, value: Expression, dtype: DType = None): # type: ignore
         assert isinstance(location, Location)
         if dtype: assert dtype in DataTypes
-        if value: assert isinstance(value, Expression)
+        assert isinstance(value, Expression)
         self.location = location
         self.dtype = dtype
         self.value = value
@@ -209,8 +222,30 @@ class CompoundExpression(Expression):
         assert isinstance(instructions, list)
         for inst in instructions[:-1]:
             assert isinstance(inst, Statement)
-        assert isinstance(instructions[-1], Expression)
+        assert isinstance(instructions[-1], Expression) or isinstance(instructions[-1], Statement)
         self.instructions = instructions
 
     def __repr__(self):
         return f'CompoundExpression({self.instructions}'
+
+class Argument(Node):
+    '''
+    int a
+    '''
+    def __init__(self, dtype: DType, name: str): # type: ignore
+        assert dtype in DataTypes
+        assert isinstance(name, str)
+        self.dtype = dtype
+        self.name = name
+
+    def __repr__(self):
+        return f'{self.name} {self.dtype}'
+
+class FunctionDefinition(Statement):
+    '''
+    func add(x int, y int) int {
+        return x + y;
+    }
+    '''
+    def __init__(self, statements: BlockStatement, arguments: list[Argument], typeReturn: DType = 'void'): # type: ignore
+        pass

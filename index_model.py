@@ -10,6 +10,29 @@ def printEx(count: int, expr_source: str, expr_model: Node):
     print()
 
 
+# Exemplos 0
+s0 = '''
+if a != 5 && b >= c {
+    var u unit = ();
+    var v = { print u; };
+}
+'''
+m0 = IfStatement(
+    BinOp(
+        '&&',
+        BinOp('!=', Location('a'), Integer(5)),
+        BinOp('>=', Location('b'), Location('c'))
+    ),
+    BlockStatement([
+        DeclarationVar(Location('u'), Unit(), 'unit'),
+        DeclarationVar(
+            Location('v'),
+            CompoundExpression([ Print(Location('u')) ])
+        )
+    ], 1)
+)
+printEx(0, s0, m0)
+
 # Exemplo 1
 expr_source1 = '''
 2
@@ -63,10 +86,10 @@ const pi = 3.14159;
 const tau = 2.0 * pi;
 '''
 m5 = BlockStatement([
-    DeclarationConst(Location('pi'), value= Float(3.14159)),
+    DeclarationConst(Location('pi'), Float(3.14159)),
     DeclarationConst(
         Location('tau'),
-        value=BinOp('*', Float(2.0), Location('pi'))
+        BinOp('*', Float(2.0), Location('pi'))
     )
 ])
 printEx(5, s5, m5)
@@ -77,7 +100,7 @@ var r float;
 '''
 m6 = DeclarationVar(
     Location('r'),
-    'float'
+    dtype='float'
 )
 printEx(6, s6, m6)
 
@@ -107,14 +130,14 @@ var d = (a > 0.0) && (a < 10.0);
 print d;
 '''
 m8 = BlockStatement([
-    DeclarationVar(Location('c'), 'bool', Bool(True)),
+    DeclarationVar(Location('c'), Bool(True), 'bool'),
     Assignment(
         Location('c'),
         BinOp('<', Location('a'), Float(100.0))
     ),
     DeclarationVar(
         Location('d'),
-        value= BinOp(
+        BinOp(
             '&&',
             BinOp('>', Location('a'), Float(0.0)),
             BinOp('<', Location('a'), Float(10.0))
@@ -155,9 +178,9 @@ while x < n {
 }
 '''
 m10 = BlockStatement([
-    DeclarationConst(Location('n'), value=Integer(10)),
-    DeclarationVar(Location('x'), 'int', Integer(1)),
-    DeclarationVar(Location('fact'), 'int', Integer(1)),
+    DeclarationConst(Location('n'), Integer(10)),
+    DeclarationVar(Location('x'), Integer(1), 'int'),
+    DeclarationVar(Location('fact'), Integer(1), 'int'),
     WhileStatement(
         BinOp('<', Location('x'), Location('n')),
         BlockStatement([
@@ -184,13 +207,13 @@ print x;
 print y;
 '''
 m11 = BlockStatement([
-    DeclarationVar(Location('x'), value=Integer(37)),
-    DeclarationVar(Location('y'), value=Integer(42)),
+    DeclarationVar(Location('x'), Integer(37)),
+    DeclarationVar(Location('y'), Integer(42)),
     Assignment(
         Location('x'),
         CompoundExpression([
-            DeclarationVar( Location('t'), value=Location('y')),
-            Assignment(Location('y'), value=Location('x')),
+            DeclarationVar( Location('t'), Location('y')),
+            Assignment(Location('y'), Location('x')),
             Location('t')
         ])
     ),
@@ -198,3 +221,37 @@ m11 = BlockStatement([
     Print(Location('y'))
 ])
 printEx(11, s11, m11)
+
+# Exemplo 12
+s12 ='''
+func add(x int, y int) int {
+    return x + y;
+}
+
+func mul(x int, y int) int {
+    return x * y;
+}
+
+func factorial(n int) int {
+    if n == 0 {
+        return 1;
+    } else {
+        return mul(n, factorial(add(n, -1)));
+    }
+}
+
+func print_factorials(last int) {
+    var x = 0;
+    while x < last {
+        print factorial(x);
+        x = add(x, 1);
+    }
+}
+
+func main() int {
+    var result = print_factorials(10);
+    return 0;
+}
+'''
+# m12
+# printEx(12, s12, m12)

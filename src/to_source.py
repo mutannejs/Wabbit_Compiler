@@ -25,8 +25,11 @@ class _NodeVisitor:
     def visit_Char(self, node: Char):
         return repr(node.value)
 
-    def visit_Bool(self, node: Char):
-        return f'{node.value}'
+    def visit_Bool(self, node: Bool):
+        return 'true' if node.value else 'false'
+
+    def visit_Unit(self, node: Unit):
+        return f'()'
 
     def visit_Print(self, node: Print):
         return f'print {self.visit(node.expr)};'
@@ -67,7 +70,9 @@ class _NodeVisitor:
         insts = ''
         for inst in node.instructions:
             insts += ' ' + self.visit(inst)
-        return f'{{{insts}; }}'
+        if isinstance(node.instructions[-1], Expression):
+            insts += ';'
+        return f'{{{insts} }}'
 
 
 def to_source(node):
