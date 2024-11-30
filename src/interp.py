@@ -3,7 +3,6 @@ from typing import Any, List, Dict
 
 from .model import *
 
-
 class EnvDataType():
     def __init__(self, value: Any, changeble: bool, dtype: DType): # type: ignore
         self.value = value
@@ -28,6 +27,7 @@ rule = _interpret.register
 @rule(Float)
 @rule(Char)
 @rule(Bool)
+@rule(Unit)
 def _interpret_literal(node: Integer | Float | Char | Bool, env: EnvType):
     return node.value
 
@@ -49,8 +49,10 @@ def _interpret_unop(node: UnOp, env: EnvType):
     exprval = _getValue(node.expr, env)
     if node.op == '+':
         return exprval
-    else:
+    elif node.op == '-':
         return -exprval
+    else:
+        return not exprval
 
 @rule(BinOp)
 def _interpret_binop(node: BinOp, env: EnvType):
@@ -65,6 +67,10 @@ def _interpret_binop(node: BinOp, env: EnvType):
         case '*': result = leftval * rightval
         case '<': result = leftval < rightval
         case '>': result = leftval > rightval
+        case '<=': result = leftval <= rightval
+        case '>=': result = leftval >= rightval
+        case '==': result = leftval == rightval
+        case '!=': result = leftval != rightval
         case '&&': result = leftval and rightval
         case '||': result = leftval or rightval
 
@@ -114,9 +120,9 @@ def _interpret_whilestatement(node: WhileStatement, env: EnvType):
 def _interpret_compoundexpression(node: CompoundExpression, env: EnvType):
     env.append({})
 
-    for inst in node.instructions:
+    for inst in node.instructions[:-1]:
         _interpret(inst, env)
-    
+
     expr = _getValue(node.instructions[-1], env)
 
     env.pop()

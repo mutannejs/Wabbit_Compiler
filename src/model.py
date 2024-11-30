@@ -22,21 +22,6 @@ class Expression(Node):
 class Definition(Node):
     pass
 
-class BlockStatement(Node):
-    '''
-    Example: a = 1; a = 2;
-    '''
-    def __init__(self, statements: list[Statement], tabs: int = 0):
-        assert isinstance(statements, list)
-        for sttmt in statements:
-            assert isinstance(sttmt, Statement)
-        assert isinstance(tabs, int)
-        self.statements = statements
-        self.tabs = tabs
-
-    def __repr__(self):
-        return f'BlockStatement({self.statements})'
-
 class Char(Expression):
     '''
     Example: 'h'
@@ -87,10 +72,25 @@ class Unit(Expression):
     Example: ()
     '''
     def __init__(self):
-        pass
+        self.value = '()'
 
     def __repr__(self):
-        return '()'
+        return self.value
+
+class BlockStatement(Node):
+    '''
+    Example: a = 1; a = 2;
+    '''
+    def __init__(self, statements: list[Statement], tabs: int = 0):
+        assert isinstance(statements, list)
+        for sttmt in statements:
+            assert isinstance(sttmt, Statement)
+        assert isinstance(tabs, int)
+        self.statements = statements
+        self.tabs = tabs
+
+    def __repr__(self):
+        return f'BlockStatement({self.statements})'
 
 class Print(Statement):
     '''
