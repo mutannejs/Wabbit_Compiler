@@ -189,14 +189,16 @@ class IfStatement(Statement):
     '''
     Example: if a > 0.0 { print a; } else { print -a; }
     '''
-    def __init__(self, cmp: Expression, block_if: BlockStatement, block_else: BlockStatement = None):
+    def __init__(self, cmp: Expression, block_if: BlockStatement, block_else: BlockStatement = None, tabs: int = 0):
         assert isinstance(cmp, Expression)
         assert isinstance(block_if, BlockStatement)
         if block_else:
             assert isinstance(block_else, BlockStatement)
+        assert type(tabs) == int
         self.cmp = cmp
         self.block_if = block_if
         self.block_else = block_else
+        self.tabs = tabs
 
     def __repr__(self):
         if self.block_else:
@@ -205,11 +207,13 @@ class IfStatement(Statement):
             return f'IfStatement({self.cmp}, {self.block_if})'
 
 class WhileStatement(Statement):
-    def __init__(self, cmp: Expression, body: BlockStatement):
+    def __init__(self, cmp: Expression, body: BlockStatement, tabs: int = 0):
         assert isinstance(cmp, Expression)
         assert isinstance(body, BlockStatement)
+        assert type(tabs) == int
         self.cmp = cmp
         self.body = body
+        self.tabs = tabs
 
     def __repr__(self):
         return f'WhileStatement({self.cmp}, {self.body})'
@@ -226,7 +230,7 @@ class CompoundExpression(Expression):
         self.instructions = instructions
 
     def __repr__(self):
-        return f'CompoundExpression({self.instructions}'
+        return f'CompoundExpression({self.instructions})'
 
 class Argument(Node):
     '''
@@ -239,13 +243,61 @@ class Argument(Node):
         self.name = name
 
     def __repr__(self):
-        return f'{self.name} {self.dtype}'
+        return f'Argument({self.name}, {self.dtype})'
 
-class FunctionDefinition(Statement):
+class ReturnStatement(Statement):
+    '''
+    return x + y
+    '''
+    def __init__(self, expr: Expression):
+        assert isinstance(expr, Expression)
+        self.value = expr
+
+    def __repr__(self):
+        return f'ReturnStatement({self.value})'
+
+class FunctionDefinition(Definition):
     '''
     func add(x int, y int) int {
         return x + y;
     }
     '''
-    def __init__(self, statements: BlockStatement, arguments: list[Argument], typeReturn: DType = 'void'): # type: ignore
-        pass
+    def __init__(self, name: str, statements: BlockStatement, params: list[Argument] = None, typeReturn: DType = 'unit'): # type: ignore
+        assert type(name) == str
+        if params != None: assert isinstance(params, list)
+        if params != None:
+            for a in params: assert isinstance(a, Argument)
+        assert typeReturn in DataTypes
+        assert isinstance(statements, BlockStatement)
+        self.name = name
+        self.statements = statements
+        self.params = params
+        self.typeReturn = typeReturn
+
+    def __repr__(self):
+        return f'FunctionDefinition({self.name}, {self.params}, {self.statements}, {self.typeReturn})'
+
+class FunctionCall(Expression):
+    '''
+    mul(n, factorial(add(n, -1)));
+    '''
+    def __init__(self, name: str, args: list[Expression]):
+        assert type(name) == str
+        assert isinstance(args, list)
+        for a in args:
+            assert isinstance(a, Expression)
+        self.name = name
+        self.args = args
+
+    def __repr__(self):
+        return f'FunctionCall(\'{self.name}\', {self.args})'
+
+class Program():
+    def __init__(self, definitions: list[Definition | DeclarationVar | DeclarationConst]):
+        assert isinstance(definitions, list)
+        for d in definitions:
+            assert isinstance(d, Definition) or isinstance(d, DeclarationConst) or isinstance(d, DeclarationVar)
+        self.definitions = definitions
+
+    def __repr__(self):
+        return f'Program({self.definitions})'

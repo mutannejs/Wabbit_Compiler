@@ -253,5 +253,103 @@ func main() int {
     return 0;
 }
 '''
-# m12
-# printEx(12, s12, m12)
+m12 = Program([
+    FunctionDefinition(
+        'add',
+        BlockStatement([
+            ReturnStatement(
+                BinOp('+', Location('x'), Location('y'))
+            )
+        ], 1),
+        [ Argument('int', 'x'), Argument('int', 'y') ],
+        'int'
+    ),
+    FunctionDefinition(
+        'mul',
+        BlockStatement([
+            ReturnStatement(
+                BinOp('*', Location('x'), Location('y'))
+            )
+        ], 1),
+        [ Argument('int', 'x'), Argument('int', 'y') ],
+        'int'
+    ),
+    FunctionDefinition(
+        'factorial',
+        BlockStatement([
+            IfStatement(
+                BinOp('==', Location('n'), Integer(0)),
+                BlockStatement([
+                    ReturnStatement(Integer(1))
+                ], 2),
+                BlockStatement([
+                    ReturnStatement(
+                        FunctionCall(
+                            'mul', [
+                                Location('n'),
+                                FunctionCall(
+                                    'factorial', [
+                                        FunctionCall(
+                                            'add', [
+                                                Location('n'),
+                                                UnOp('-', Integer(1))
+                                            ]
+                                        )
+                                    ]
+                                )
+                            ]
+                        )
+                    )
+                ], 2),
+                1
+            )
+        ], 1),
+        [ Argument('int', 'n') ],
+        'int'
+    ),
+    FunctionDefinition(
+        'print_factorials',
+        BlockStatement([
+            DeclarationVar(Location('x'), Integer(0)),
+            WhileStatement(
+                BinOp('<', Location('x'), Location('last')),
+                BlockStatement([
+                    Print(
+                        FunctionCall(
+                            'factorial', [
+                                Location('x')
+                            ]
+                        )
+                    ),
+                    Assignment(
+                        Location('x'),
+                        FunctionCall(
+                            'add', [
+                                Location('x'),
+                                Integer(1)
+                            ]
+                        )
+                    )
+                ], 2),
+                1
+            )
+        ], 1),
+        [ Argument('int', 'last') ]
+    ),
+    FunctionDefinition(
+        'main',
+        BlockStatement([
+            DeclarationVar(
+                Location('result'),
+                FunctionCall(
+                    'print_factorials', [
+                        Integer(10)
+                    ]
+                ),
+            ),
+            ReturnStatement(Integer(0))
+        ], 1),
+        typeReturn = 'int'
+    )
+])
+printEx(12, s12, m12)

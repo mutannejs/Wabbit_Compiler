@@ -59,12 +59,14 @@ class _NodeVisitor:
         return f'{self.visit(node.location)} = {self.visit(node.value)};'
 
     def visit_IfStatement(self, node: IfStatement):
-        block_if = f'if {self.visit(node.cmp)} {{\n{self.visit(node.block_if)}}}'
-        block_else = f' else {{\n{self.visit(node.block_else)}}}' if node.block_else else ''
+        tabs = ''.rjust(node.tabs * 4, ' ')
+        block_if = f'if {self.visit(node.cmp)} {{\n{self.visit(node.block_if)}{tabs}}}'
+        block_else = f' else {{\n{self.visit(node.block_else)}{tabs}}}' if node.block_else else ''
         return block_if + block_else
 
     def visit_WhileStatement(self, node: WhileStatement):
-        return f'while {self.visit(node.cmp)} {{\n{self.visit(node.body)}}}'
+        tabs = ''.rjust(node.tabs * 4, ' ')
+        return f'while {self.visit(node.cmp)} {{\n{self.visit(node.body)}{tabs}}}'
 
     def visit_CompoundExpression(self, node: CompoundExpression):
         insts = ''
@@ -73,6 +75,36 @@ class _NodeVisitor:
         if isinstance(node.instructions[-1], Expression):
             insts += ';'
         return f'{{{insts} }}'
+
+    def visit_Argument(self, node: Argument):
+        return f'{node.name} {node.dtype}'
+
+    def visit_ReturnStatement(self, node: ReturnStatement):
+        return f'return {self.visit(node.value)};'
+
+    def visit_FunctionDefinition(self, node: FunctionDefinition):
+        params = ''
+        if node.params:
+            for a in node.params[:-1]:
+                params += f'{self.visit(a)}, '
+            params += f'{self.visit(node.params[-1])}'
+        interface = f'func {node.name}({params}) {node.typeReturn+" " if node.typeReturn != "unit" else ""}{{'
+        blockSt = f'{self.visit(node.statements)}'
+        return f'{interface}\n{blockSt}}}'
+
+    def visit_FunctionCall(self, node: FunctionCall):
+        args = ''
+        for a in node.args[:-1]:
+            args += f'{self.visit(a)}, '
+        args += f'{self.visit(node.args[-1])}'
+        return f'{node.name}({args})'
+
+    def visit_Program(self, node: Program):
+        strCode = ''
+        for d in node.definitions[:-1]:
+            strCode += f'{self.visit(d)}\n\n'
+        strCode += f'{self.visit(node.definitions[-1])}'
+        return strCode
 
 
 def to_source(node):
