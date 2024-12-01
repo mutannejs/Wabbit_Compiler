@@ -176,3 +176,135 @@ m7 = BlockStatement([
     Print(Location('y'))
 ])
 printEx(7, s7, m7)
+
+# Exemplo 8
+s8 ='''
+func add(x int, y int) int {
+    return x + y;
+}
+
+func mul(x int, y int) int {
+    return x * y;
+}
+
+func factorial(n int) int {
+    if n == 0 {
+        return 1;
+    } else {
+        return mul(n, factorial(add(n, -1)));
+    }
+}
+
+func print_factorials(last int) {
+    var x = 0;
+    while x < last {
+        print factorial(x);
+        x = add(x, 1);
+    }
+}
+
+func main() int {
+    var result = print_factorials(10);
+    return 0;
+}
+'''
+m8 = Program([
+    FunctionDefinition(
+        'add',
+        BlockStatement([
+            ReturnStatement(
+                BinOp('+', Location('x'), Location('y'))
+            )
+        ], 1),
+        [ Argument('int', 'x'), Argument('int', 'y') ],
+        'int'
+    ),
+    FunctionDefinition(
+        'mul',
+        BlockStatement([
+            ReturnStatement(
+                BinOp('*', Location('x'), Location('y'))
+            )
+        ], 1),
+        [ Argument('int', 'x'), Argument('int', 'y') ],
+        'int'
+    ),
+    FunctionDefinition(
+        'factorial',
+        BlockStatement([
+            IfStatement(
+                BinOp('==', Location('n'), Integer(0)),
+                BlockStatement([
+                    ReturnStatement(Integer(1))
+                ], 2),
+                BlockStatement([
+                    ReturnStatement(
+                        FunctionApplication(
+                            'mul', [
+                                Location('n'),
+                                FunctionApplication(
+                                    'factorial', [
+                                        FunctionApplication(
+                                            'add', [
+                                                Location('n'),
+                                                UnOp('-', Integer(1))
+                                            ]
+                                        )
+                                    ]
+                                )
+                            ]
+                        )
+                    )
+                ], 2),
+                1
+            )
+        ], 1),
+        [ Argument('int', 'n') ],
+        'int'
+    ),
+    FunctionDefinition(
+        'print_factorials',
+        BlockStatement([
+            DeclarationVar(Location('x'), Integer(0)),
+            WhileStatement(
+                BinOp('<', Location('x'), Location('last')),
+                BlockStatement([
+                    Print(
+                        FunctionApplication(
+                            'factorial', [
+                                Location('x')
+                            ]
+                        )
+                    ),
+                    Assignment(
+                        Location('x'),
+                        FunctionApplication(
+                            'add', [
+                                Location('x'),
+                                Integer(1)
+                            ]
+                        )
+                    )
+                ], 2),
+                1
+            )
+        ], 1),
+        [ Argument('int', 'last') ]
+    ),
+    FunctionDefinition(
+        'main',
+        BlockStatement([
+            DeclarationVar(
+                Location('result'),
+                FunctionApplication(
+                    'print_factorials', [
+                        Integer(10)
+                    ]
+                ),
+            ),
+            ReturnStatement(Integer(0))
+        ], 1),
+        typeReturn = 'int'
+    )
+])
+printEx(8, s8, m8)

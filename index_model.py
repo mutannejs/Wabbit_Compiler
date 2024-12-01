@@ -284,12 +284,12 @@ m12 = Program([
                 ], 2),
                 BlockStatement([
                     ReturnStatement(
-                        FunctionCall(
+                        FunctionApplication(
                             'mul', [
                                 Location('n'),
-                                FunctionCall(
+                                FunctionApplication(
                                     'factorial', [
-                                        FunctionCall(
+                                        FunctionApplication(
                                             'add', [
                                                 Location('n'),
                                                 UnOp('-', Integer(1))
@@ -315,7 +315,7 @@ m12 = Program([
                 BinOp('<', Location('x'), Location('last')),
                 BlockStatement([
                     Print(
-                        FunctionCall(
+                        FunctionApplication(
                             'factorial', [
                                 Location('x')
                             ]
@@ -323,7 +323,7 @@ m12 = Program([
                     ),
                     Assignment(
                         Location('x'),
-                        FunctionCall(
+                        FunctionApplication(
                             'add', [
                                 Location('x'),
                                 Integer(1)
@@ -341,7 +341,7 @@ m12 = Program([
         BlockStatement([
             DeclarationVar(
                 Location('result'),
-                FunctionCall(
+                FunctionApplication(
                     'print_factorials', [
                         Integer(10)
                     ]

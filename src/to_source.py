@@ -92,7 +92,7 @@ class _NodeVisitor:
         blockSt = f'{self.visit(node.statements)}'
         return f'{interface}\n{blockSt}}}'
 
-    def visit_FunctionCall(self, node: FunctionCall):
+    def visit_FunctionApplication(self, node: FunctionApplication):
         args = ''
         for a in node.args[:-1]:
             args += f'{self.visit(a)}, '
@@ -101,9 +101,9 @@ class _NodeVisitor:
 
     def visit_Program(self, node: Program):
         strCode = ''
-        for d in node.definitions[:-1]:
+        for d in node.declarations[:-1]:
             strCode += f'{self.visit(d)}\n\n'
-        strCode += f'{self.visit(node.definitions[-1])}'
+        strCode += f'{self.visit(node.declarations[-1])}'
         return strCode
 
 

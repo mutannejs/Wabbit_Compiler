@@ -20,7 +20,9 @@ class Expression(Node):
     pass
 
 class Definition(Node):
-    pass
+    def __init__(self, name: str):
+        assert type(name) == str
+        self.name = name
 
 class Char(Expression):
     '''
@@ -263,13 +265,12 @@ class FunctionDefinition(Definition):
     }
     '''
     def __init__(self, name: str, statements: BlockStatement, params: list[Argument] = None, typeReturn: DType = 'unit'): # type: ignore
-        assert type(name) == str
+        super().__init__(name)
         if params != None: assert isinstance(params, list)
         if params != None:
             for a in params: assert isinstance(a, Argument)
         assert typeReturn in DataTypes
         assert isinstance(statements, BlockStatement)
-        self.name = name
         self.statements = statements
         self.params = params
         self.typeReturn = typeReturn
@@ -277,27 +278,28 @@ class FunctionDefinition(Definition):
     def __repr__(self):
         return f'FunctionDefinition({self.name}, {self.params}, {self.statements}, {self.typeReturn})'
 
-class FunctionCall(Expression):
+class FunctionApplication(Expression):
     '''
     mul(n, factorial(add(n, -1)));
     '''
-    def __init__(self, name: str, args: list[Expression]):
+    def __init__(self, name: str, args: list[Expression] = None):
         assert type(name) == str
-        assert isinstance(args, list)
-        for a in args:
-            assert isinstance(a, Expression)
+        if args:
+            assert isinstance(args, list)
+            for a in args:
+                assert isinstance(a, Expression)
         self.name = name
         self.args = args
 
     def __repr__(self):
-        return f'FunctionCall(\'{self.name}\', {self.args})'
+        return f'FunctionApplication(\'{self.name}\', {self.args})'
 
 class Program():
-    def __init__(self, definitions: list[Definition | DeclarationVar | DeclarationConst]):
-        assert isinstance(definitions, list)
-        for d in definitions:
+    def __init__(self, declarations: list[Definition | DeclarationVar | DeclarationConst]):
+        assert isinstance(declarations, list)
+        for d in declarations:
             assert isinstance(d, Definition) or isinstance(d, DeclarationConst) or isinstance(d, DeclarationVar)
-        self.definitions = definitions
+        self.declarations = declarations
 
     def __repr__(self):
-        return f'Program({self.definitions})'
+        return f'Program({self.declarations})'
