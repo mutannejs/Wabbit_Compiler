@@ -24,6 +24,8 @@ class EnvType:
         self.declarations[definition.name] = definition
 
     def addData(self, name: str, data: EnvDataType):
+        exists = self.stack[-1].get(name)
+        assert not exists or exists.chang
         self.stack[-1][name] = data
 
     def getDefinition(self, name: str):
@@ -33,8 +35,6 @@ class EnvType:
         for i in range( len(self.stack) - 1, -1, -1 ):
             if name in self.stack[i].keys():
                 return self.stack[i].get(name)
-
-# EnvType = List[Dict[str, EnvDataType]]
 
 def _getValue(expr: Expression, env: EnvType):
     val = _interpret(expr, env)
@@ -60,15 +60,13 @@ def _interpret_literal(node: Integer | Float | Char | Bool, env: EnvType):
 def _interpret_blockstatement(node: BlockStatement, env: EnvType):
     env.newScope()
 
-    expr = None
     for sttmt in node.statements:
+        resp = _interpret(sttmt, env)
         if isinstance(sttmt, ReturnStatement):
-            expr = _getValue(sttmt, env)
             break
-        _interpret(sttmt, env)
 
     env.popScope()
-    return expr
+    return resp if resp else Unit()
 
 @rule(Print)
 def _interpret_print(node: Print, env):
@@ -123,7 +121,7 @@ def _interpret_declaration(node: DeclarationVar | DeclarationConst, env: EnvType
     if dtype == None:
         dtype = node.dtype
 
-    changeble = True if isinstance(node, DeclarationConst) else False
+    changeble = True if isinstance(node, DeclarationVar) else False
     env.addData(name, EnvDataType(value, changeble, dtype))
 
 @rule(Assignment)
@@ -135,14 +133,18 @@ def _interpret_assignment(node: Assignment, env: EnvType):
 @rule(IfStatement)
 def _interpret_Ifstatement(node: IfStatement, env: EnvType):
     if _interpret(node.cmp, env):
-        _interpret(node.block_if, env)
+        resp = _interpret_blockstatement(node.block_if, env)
     elif node.block_else:
-        _interpret(node.block_else, env)
+        resp = _interpret_blockstatement(node.block_else, env)
+
+    if resp: return resp
 
 @rule(WhileStatement)
 def _interpret_whilestatement(node: WhileStatement, env: EnvType):
     while _interpret(node.cmp, env):
-        _interpret(node.body, env)
+        resp = _interpret_blockstatement(node.body, env)
+
+    if resp: return resp
 
 @rule(CompoundExpression)
 def _interpret_compoundexpression(node: CompoundExpression, env: EnvType):
@@ -171,45 +173,19 @@ def _interpret_returnstatement(node: ReturnStatement, env: EnvType):
 def _interpret_functiondefinition(node: FunctionDefinition, env: EnvType):
     env.addDefinition(node)
 
-
-'''
-env.newScope()
-
-    expr = None
-    for sttmt in node.statements:
-        if isinstance(sttmt, ReturnStatement):
-            if isinstance(sttmt.value, Location):
-                expr = env.getData(sttmt.value.name)
-            else:
-                expr = sttmt.value
-            break
-
-        _interpret(sttmt, env)
-
-    env.popScope()
-
-    if isinstance(expr, EnvDataType):
-        match expr.dtype:
-            case 'int': return Integer(expr.value)
-            case 'float': return Float(expr.value)
-            case 'bool': return Bool(expr.value)
-            case _: return Unit()
-
-    return expr
-'''
-
-
 @rule(FunctionApplication)
 def _interpret_functionapplication(node: FunctionApplication, env: EnvType):
     func: FunctionDefinition = env.getDefinition(node.name)
 
     if func.params:
-        for i in range( len(func.params) -1, -1, -1 ):
+        for i in range(len(func.params)):
             param = _interpret_argument(func.params[i], env)
             param.value = node.args[i]
             func.statements.statements.insert(0, param)
+            print(func.statements.statements[0])
 
-    return _interpret_blockstatement(func.statements, env)
+    resp = _interpret_blockstatement(func.statements, env)
+    return resp if func.typeReturn != 'unit' else Unit().value
 
 @rule(Program)
 def _interpret_program(node: Program, env: EnvType):
