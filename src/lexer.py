@@ -2,6 +2,10 @@ from sly import Lexer
 
 class WabbitLexer(Lexer):
     tokens = {
+        # bloco de comentário
+        COMMENTBLOCK,
+        UNCOMMENTBLOCK, # Unterminated comment block
+
         # keywords
         CONST,
         VAR,
@@ -21,6 +25,7 @@ class WabbitLexer(Lexer):
         INTEGER,
         FLOAT,
         CHAR,
+        UNCHAR, # unterminated character const
 
         # operadores
         PLUS,
@@ -38,7 +43,7 @@ class WabbitLexer(Lexer):
         LNOT,
 
         # diversos
-        ASSGIN,
+        ASSIGN,
         SEMI,
         LPAREN,
         RPAREN,
@@ -47,8 +52,11 @@ class WabbitLexer(Lexer):
     }
 
     ignore = ' \t'
+    ignore_comment = r'\//.*'
 
-    # tokens
+    COMMENTBLOCK = r'/\*[^(*/)]*\*/'
+    UNCOMMENTBLOCK = r'/\*[^(*/)]*'
+
     NAME = r'[a-zA-Z_][a-zA-Z0-9_]*'
     NAME['const'] = CONST
     NAME['var'] = VAR
@@ -63,7 +71,8 @@ class WabbitLexer(Lexer):
 
     INTEGER = r'[0-9]+'
     FLOAT = r'[0-9]+.[0-9]+'
-    CHAR = r"('[a-zA-Z]')|('\\x[0-9a-fA-F]{2}')|('\\[n']')"
+    CHAR = r"'(([a-zA-Z])|(\\x[0-9a-fA-F]{2})|(\\[n']))'"
+    UNCHAR = r"'([a-zA-Z])|(\\x[0-9a-fA-F]{2})|(\\[n'])"
 
     PLUS = r'\+'
     MINUS = r'-'
@@ -79,18 +88,13 @@ class WabbitLexer(Lexer):
     LOR = r'\|\|'
     LNOT = r'!'
 
-    ASSGIN = r'='
+    ASSIGN = r'='
     SEMI = r';'
     LPAREN = r'\('
     RPAREN = r'\)'
     LBRACE = r'\{'
     RBRACE = r'\}'
 
-    def __init__(self):
-        self.lineno = 0
-        self.index = 0
-
-    # Error handling rule
     def error(self, t):
         print("Illegal character '%s'" % t.value[0])
         self.index += 1
@@ -98,7 +102,13 @@ class WabbitLexer(Lexer):
     @_(r'\n+')
     def ignore_newline(self, t):
         self.lineno += len(t.value)
-        self.index += len(t.value)
+
+    def COMMENTBLOCK(self, t):
+        self.lineno += t.value.count('\n')
+        pass
+
+    def UNCOMMENTBLOCK(self, t):
+        print(self.lineno,': Unterminated comment')
 
     def INTEGER(self, t):
         t.value = int(t.value)
@@ -107,3 +117,6 @@ class WabbitLexer(Lexer):
     def CHAR(self, t):
         t.value = t.value[1:-1]
         return t
+
+    def UNCHAR(self, t):
+        print(self.lineno,': Unterminated character constant')
