@@ -110,9 +110,9 @@ class WabbitLexer(Lexer):
     def UNCOMMENTBLOCK(self, t):
         print(self.lineno,': Unterminated comment')
 
-    def INTEGER(self, t):
-        t.value = int(t.value)
-        return t
+    # def INTEGER(self, t):
+    #     t.value = int(t.value)
+    #     return t
 
     def CHAR(self, t):
         t.value = t.value[1:-1]
@@ -120,3 +120,7 @@ class WabbitLexer(Lexer):
 
     def UNCHAR(self, t):
         print(self.lineno,': Unterminated character constant')
+
+
+def tokenize(text: str):
+    return WabbitLexer().tokenize(text);

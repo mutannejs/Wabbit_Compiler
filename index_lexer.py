@@ -1,6 +1,4 @@
-from src.lexer import WabbitLexer
-
-lexer = WabbitLexer()
+from src.lexer import tokenize
 
 # Primeiro exemplo
 data = r'''
@@ -10,7 +8,7 @@ data = r'''
     a && y || ç == c != 5
     a = b; ( { () } )
 '''
-for tok in lexer.tokenize(data):
+for tok in tokenize(data):
     print(tok)
 print('\n')
 
@@ -25,7 +23,7 @@ while n < 10 {
     print value ;
     n = n + 1;
 }'''
-for tok in lexer.tokenize(data):
+for tok in tokenize(data):
     print(tok)
 print('\n')
 
@@ -45,5 +43,5 @@ print 'l';
 print 'd;
 print '!';
 '''
-for tok in lexer.tokenize(data):
+for tok in tokenize(data):
     print(tok)
