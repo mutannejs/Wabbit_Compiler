@@ -1,3 +1,6 @@
+# import sys
+# sys.path.insert(0, 'sly.zip')
+# from sly import Lexer
 from sly import Lexer
 
 class WabbitLexer(Lexer):
@@ -22,8 +25,8 @@ class WabbitLexer(Lexer):
         NAME,
 
         # literais
-        INTEGER,
         FLOAT,
+        INTEGER,
         CHAR,
         UNCHAR, # unterminated character const
 
@@ -54,8 +57,8 @@ class WabbitLexer(Lexer):
     ignore = ' \t'
     ignore_comment = r'\//.*'
 
-    COMMENTBLOCK = r'/\*[^(*/)]*\*/'
-    UNCOMMENTBLOCK = r'/\*[^(*/)]*'
+    COMMENTBLOCK = r'/\*(.|\n)*?\*/'
+    UNCOMMENTBLOCK = COMMENTBLOCK[:-4]
 
     NAME = r'[a-zA-Z_][a-zA-Z0-9_]*'
     NAME['const'] = CONST
@@ -69,10 +72,10 @@ class WabbitLexer(Lexer):
     NAME['true'] = TRUE
     NAME['false'] = FALSE
 
+    FLOAT = r'[0-9]+\.[0-9]+'
     INTEGER = r'[0-9]+'
-    FLOAT = r'[0-9]+.[0-9]+'
-    CHAR = r"'(([a-zA-Z])|(\\x[0-9a-fA-F]{2})|(\\[n']))'"
-    UNCHAR = r"'([a-zA-Z])|(\\x[0-9a-fA-F]{2})|(\\[n'])"
+    CHAR = r"'((\S)|(\\x[0-9a-fA-F]{2})|(\\[n']))'"
+    UNCHAR = CHAR[-1]
 
     PLUS = r'\+'
     MINUS = r'-'
@@ -109,14 +112,6 @@ class WabbitLexer(Lexer):
 
     def UNCOMMENTBLOCK(self, t):
         print(self.lineno,': Unterminated comment')
-
-    # def INTEGER(self, t):
-    #     t.value = int(t.value)
-    #     return t
-
-    def CHAR(self, t):
-        t.value = t.value[1:-1]
-        return t
 
     def UNCHAR(self, t):
         print(self.lineno,': Unterminated character constant')

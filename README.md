@@ -12,8 +12,8 @@ Compilador da linguagem **Wabbit**. Feito para a matéria Laboratório de Compil
     1. [X] obrigar constantes receberem um inicializador
 1. [X] Fazer o anterior para o interp também
 1. [X] Criar Lexer
-1. [ ] Realizar mais testes para o Lexer
+1. [X] Realizar mais testes para o Lexer
+1. [ ] adicionar `break` e `continue` no modelo
 1. [ ] rever o modelo do WabbitFunc
 1. [ ] implementar o interp para WabbitFunc
-1. [ ] adicionar `break` e `continue`
 1. [ ] implementar WabbitType

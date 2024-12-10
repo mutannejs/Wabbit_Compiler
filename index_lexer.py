@@ -13,35 +13,51 @@ for tok in tokenize(data):
 print('\n')
 
 # Segundo exemplo
-data = r'''/* print values of factorials */
+data = r'''/*
+    Test of break/continue 
 
-var n int = 1;
-var value int = 1;
 
-while n < 10 {
-    value = value * n;
-    print value ;
-    n = n + 1;
-}'''
+var n int = 0;
+while true {
+      n = n + 1;
+      if n == 5 {
+         continue;
+      }
+      print n;
+      if n > 10 {
+          break;
+      }
+}
+print -1;'''
 for tok in tokenize(data):
     print(tok)
 print('\n')
 
 # Terceiro exemplo
-data = r'''/* hello */
+data = r'''/* chartest.wb */
+
+const newline = '\n';
 print 'h';
 print 'e';
 print 'l';
 print 'l';
-print 'o;
-
-/* world
+print 'o';
+print newline;
 print 'w';
 print 'o';
 print 'r';
 print 'l';
-print 'd;
-print '!';
+print 'd';
+print newline;'''
+for tok in tokenize(data):
+    print(tok)
+print('\n')
+
+# Quarto exemplo
+data = r'''
+float a = 2.0;
+int b = 2 . 3;
+print '.' ();
 '''
 for tok in tokenize(data):
     print(tok)
