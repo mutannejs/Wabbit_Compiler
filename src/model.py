@@ -69,6 +69,26 @@ class Bool(Expression):
     def __repr__(self):
         return 'true' if self.value else 'false'
 
+class Break(Statement):
+    '''
+    break;
+    '''
+    def __init__(self):
+        pass
+
+    def __repr__(self):
+        return 'Break()'
+
+class Continue(Statement):
+    '''
+    continue;
+    '''
+    def __init__(self):
+        pass
+
+    def __repr__(self):
+        return 'Continue()'
+
 class Unit(Expression):
     '''
     Example: ()

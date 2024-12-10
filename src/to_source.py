@@ -29,7 +29,13 @@ class _NodeVisitor:
         return 'true' if node.value else 'false'
 
     def visit_Unit(self, node: Unit):
-        return f'()'
+        return '()'
+
+    def visit_Break(self, node: Break):
+        return 'break;'
+
+    def visit_Continue(self, node: Continue):
+        return 'continue;'
 
     def visit_Print(self, node: Print):
         return f'print {self.visit(node.expr)};'

@@ -56,13 +56,19 @@ rule = _interpret.register
 def _interpret_literal(node: Integer | Float | Char | Bool, env: EnvType):
     return node.value
 
+@rule(Break)
+@rule(Continue)
+def _interpret_breakcontinue(node: Break | Continue, env: EnvType):
+    return node
+
 @rule(BlockStatement)
 def _interpret_blockstatement(node: BlockStatement, env: EnvType):
+    resp = None
     env.newScope()
 
     for sttmt in node.statements:
         resp = _interpret(sttmt, env)
-        if isinstance(sttmt, ReturnStatement):
+        if isinstance(sttmt, ReturnStatement) or isinstance(resp, Break) or isinstance(resp, Continue):
             break
 
     env.popScope()
@@ -132,6 +138,7 @@ def _interpret_assignment(node: Assignment, env: EnvType):
 
 @rule(IfStatement)
 def _interpret_Ifstatement(node: IfStatement, env: EnvType):
+    resp = None
     if _interpret(node.cmp, env):
         resp = _interpret_blockstatement(node.block_if, env)
     elif node.block_else:
@@ -141,8 +148,11 @@ def _interpret_Ifstatement(node: IfStatement, env: EnvType):
 
 @rule(WhileStatement)
 def _interpret_whilestatement(node: WhileStatement, env: EnvType):
+    resp = None
     while _interpret(node.cmp, env):
         resp = _interpret_blockstatement(node.body, env)
+        if isinstance(resp, Break): break
+        if isinstance(resp, Continue): continue
 
     if resp: return resp
 
@@ -175,6 +185,7 @@ def _interpret_functiondefinition(node: FunctionDefinition, env: EnvType):
 
 @rule(FunctionApplication)
 def _interpret_functionapplication(node: FunctionApplication, env: EnvType):
+    resp = None
     func: FunctionDefinition = env.getDefinition(node.name)
 
     if func.params:

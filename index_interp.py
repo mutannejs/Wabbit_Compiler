@@ -307,4 +307,51 @@ m8 = Program([
         typeReturn = 'int'
     )
 ])
-printEx(8, s8, m8)
+# printEx(8, s8, m8)
+
+# Exemplo 9
+s9 = '''
+const n = 10;
+var x int = 0;
+
+while x < n {
+    print x;
+    if x == 1 {
+        x = x + 2;
+        continue;
+    }
+    if x == 7 {
+        break;
+    }
+    x = x + 1;
+}
+'''
+m9 = BlockStatement([
+    DeclarationConst(Location('n'), Integer(10)),
+    DeclarationVar(Location('x'), Integer(0), 'int'),
+    WhileStatement(
+        BinOp('<', Location('x'), Location('n')),
+        BlockStatement([
+            Print(Location('x')),
+            IfStatement(
+                BinOp('==', Location('x'), Integer(1)),
+                BlockStatement([
+                    Assignment(
+                        Location('x'),
+                        BinOp('+', Location('x'), Integer(2))
+                    ),
+                    Continue()
+                ], 2)
+            ),
+            IfStatement(
+                BinOp('==', Location('x'), Integer(7)),
+                BlockStatement([ Break() ], 2)
+            ),
+            Assignment(
+                Location('x'),
+                BinOp('+', Location('x'), Integer(1))
+            )
+        ], 1)
+    )
+])
+printEx(9, s9, m9)
