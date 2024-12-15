@@ -14,6 +14,24 @@ Compilador da linguagem **Wabbit**. Feito para a matéria Laboratório de Compil
 1. [X] Criar Lexer
 1. [X] Realizar mais testes para o Lexer
 1. [X] adicionar `break` e `continue` no modelo
+1. [ ] criar Parse
 1. [ ] rever o modelo do WabbitFunc
 1. [ ] implementar o interp para WabbitFunc
 1. [ ] implementar WabbitType
+
+### Execução
+
+Para criar um ambiente virtual python:
+```
+python3 -m venv wabbit_compiller
+```
+
+Para executar o ambiente virtual do python:
+```
+source wabbit_compiller/bin/activate
+```
+
+Para desativá-lo:
+```
+deactivate
+```
