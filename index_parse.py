@@ -2,7 +2,7 @@ from src.lexer import tokenize
 from src.parse import *
 
 exmeplo = '''
-false
+const a = 5;
 '''
 
 res = WabbitParser().parse( tokenize(exmeplo) )
