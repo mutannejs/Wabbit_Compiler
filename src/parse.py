@@ -14,16 +14,39 @@ class WabbitParser(Parser):
         ('left', UOP)
     )
 
+    @_('{ statement }')
+    def statements(self, p):
+        return p.statement
+
+    @_('print_statement',
+    #    'assignment_statement',
+    #    'variable_definition',
+       'const_definition',
+    #    'if_statement',
+    #    'while_statement',
+       'break_statement',
+       'continue_statement',
+       'expr SEMI')
+    def statement(self, p):
+        if len(p) == 2:
+            return ('expr', p[0])
+        else:
+            return p[0]
+
     @_('PRINT expr SEMI')
     def print_statement(self, p):
         return Print(p.expr)
 
-    @_('CONST NAME dtype ASSIGN expr SEMI')
+    @_('CONST location NAME ASSIGN expr SEMI',
+       'CONST location ASSIGN expr SEMI')
     def const_definition(self, p):
-        return DeclarationConst(p.NAME, p.expr, p.dtype)
+        if hasattr(p, 'NAME'):
+            return DeclarationConst(p.location, p.expr, p.NAME)
+        else:
+            return DeclarationConst(p.location, p.expr, None)
 
     # @_('IF expr LBRACE statements RBRACE ')
-    #    'WHILE expr LBRACE statements RBRACE ELSE LBRACE statements RBRACE')
+    #    'IF expr LBRACE statements RBRACE ELSE LBRACE statements RBRACE')
 
     # @_('WHILE expr LBRACE statements RBRACE',)
     # def while_statement(self, p):
@@ -81,12 +104,10 @@ class WabbitParser(Parser):
 
     @_('NAME')
     def location(self, p):
-        return Location(p[0])
-
-    @_('NAME',
-       'empty')
-    def dtype(self, p):
-        return p[0] if len(p) == 1 else None
+        if p.NAME in DataTypes:
+            return p[0]
+        else:
+            return Location(p[0])
 
     @_('')
     def empty(self, p):
