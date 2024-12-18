@@ -1,6 +1,6 @@
 from sly import Parser
-from .lexer import WabbitLexer
-from .model import *
+from tokenize import WabbitLexer
+from model import *
 
 class WabbitParser(Parser):
     tokens = WabbitLexer.tokens
@@ -16,14 +16,14 @@ class WabbitParser(Parser):
 
     @_('{ statement }')
     def statements(self, p):
-        return p.statement
+        return BlockStatement(p.statement)
 
     @_('print_statement',
-    #    'assignment_statement',
-    #    'variable_definition',
+       'assignment_statement',
+       'variable_definition',
        'const_definition',
-    #    'if_statement',
-    #    'while_statement',
+       'if_statement',
+       'while_statement',
        'break_statement',
        'continue_statement',
        'expr SEMI')
@@ -37,20 +37,35 @@ class WabbitParser(Parser):
     def print_statement(self, p):
         return Print(p.expr)
 
-    @_('CONST location NAME ASSIGN expr SEMI',
-       'CONST location ASSIGN expr SEMI')
+    @_('location ASSIGN expr SEMI')
+    def assignment_statement(self, p):
+        return Assignment(p.location, p.expr)
+
+    @_('CONST location dtype ASSIGN expr SEMI',
+       'CONST assignment_statement')
+    def variable_definition(self, p):
+        dtype = p.dtype if hasattr(p, 'dtype') else None
+        return DeclarationConst(p.location, p.expr, dtype)
+
+    @_('VAR location dtype ASSIGN expr SEMI',
+       'VAR assignment_statement',
+       'VAR location SEMI',
+       'VAR location dtype SEMI')
     def const_definition(self, p):
-        if hasattr(p, 'NAME'):
-            return DeclarationConst(p.location, p.expr, p.NAME)
-        else:
-            return DeclarationConst(p.location, p.expr, None)
+        dtype = p.dtype if hasattr(p, 'dtype') else None
+        expr = p.expr if hasattr(p, 'expr') else None
+        return DeclarationVar(p.location, expr, dtype)
 
-    # @_('IF expr LBRACE statements RBRACE ')
-    #    'IF expr LBRACE statements RBRACE ELSE LBRACE statements RBRACE')
+    @_('IF expr LBRACE statements RBRACE ',
+       'IF expr LBRACE statements RBRACE ELSE LBRACE statements RBRACE')
+    def if_statement(self, p):
+        b_if = p[3]
+        b_else = p.statements1 if hasattr(p, 'ELSE') else None
+        return IfStatement(p.expr, b_if, b_else)
 
-    # @_('WHILE expr LBRACE statements RBRACE',)
-    # def while_statement(self, p):
-    #     return WhileStatement(self.expr, p.statements)
+    @_('WHILE expr LBRACE statements RBRACE',)
+    def while_statement(self, p):
+        return WhileStatement(p.expr, p.statements)
 
     @_('BREAK SEMI')
     def break_statement(self, p):
@@ -97,18 +112,15 @@ class WabbitParser(Parser):
     def literal(self, p):
         if hasattr(p, 'INTEGER'): return Integer( int(p[0]) )
         if hasattr(p, 'FLOAT'): return Float( float(p[0]) )
-        if hasattr(p, 'CHAR'): return Char(p[0])
+        if hasattr(p, 'CHAR'): return Char( p[0][1] )
         if hasattr(p, 'TRUE'): return Bool( True )
         if hasattr(p, 'FALSE'): return Bool( False )
         return Unit()
 
     @_('NAME')
     def location(self, p):
-        if p.NAME in DataTypes:
-            return p[0]
-        else:
-            return Location(p[0])
+        return Location(p[0])
 
-    @_('')
-    def empty(self, p):
-        pass
+    @_('NAME')
+    def dtype(self, p):
+        return p[0]

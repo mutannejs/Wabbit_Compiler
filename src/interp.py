@@ -1,7 +1,7 @@
 from functools import singledispatch
 from typing import Any, List, Dict
 
-from .model import *
+from model import *
 
 class EnvDataType():
     def __init__(self, value: Any, changeble: bool, dtype: DType): # type: ignore

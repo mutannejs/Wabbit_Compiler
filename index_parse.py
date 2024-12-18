@@ -1,8 +1,11 @@
-from src.lexer import tokenize
+from src.tokenize import tokenize
 from src.parse import *
 
 exmeplo = '''
-const a = 5;
+while 5 == 10 {
+    print 5;
+    var a unit = ();
+}
 '''
 
 res = WabbitParser().parse( tokenize(exmeplo) )

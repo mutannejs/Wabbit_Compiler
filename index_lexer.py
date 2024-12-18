@@ -1,4 +1,4 @@
-from src.lexer import tokenize
+from src.tokenize import tokenize
 
 # Primeiro exemplo
 data = r'''

@@ -1,13 +1,12 @@
-# import sys
-# sys.path.insert(0, 'sly.zip')
-# from sly import Lexer
+import sys
+sys.path.insert(0, 'sly.zip')
 from sly import Lexer
 
 class WabbitLexer(Lexer):
     tokens = {
         # bloco de comentário
-        COMMENTBLOCK,
-        UNCOMMENTBLOCK, # Unterminated comment block
+        # COMMENTBLOCK,
+        # UNCOMMENTBLOCK, # Unterminated comment block
 
         # keywords
         CONST,
@@ -28,7 +27,7 @@ class WabbitLexer(Lexer):
         FLOAT,
         INTEGER,
         CHAR,
-        UNCHAR, # unterminated character const
+        # UNCHAR, # unterminated character const
 
         # operadores
         PLUS,
