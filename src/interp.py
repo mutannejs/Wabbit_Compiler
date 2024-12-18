@@ -1,7 +1,7 @@
 from functools import singledispatch
 from typing import Any, List, Dict
 
-from model import *
+from .model import *
 
 class EnvDataType():
     def __init__(self, value: Any, changeble: bool, dtype: DType): # type: ignore
@@ -68,7 +68,9 @@ def _interpret_blockstatement(node: BlockStatement, env: EnvType):
 
     for sttmt in node.statements:
         resp = _interpret(sttmt, env)
-        if isinstance(sttmt, ReturnStatement) or isinstance(resp, Break) or isinstance(resp, Continue):
+        if isinstance(sttmt, ReturnStatement):
+            break
+        if ( isinstance(resp, Break) or isinstance(resp, Continue) ) and not isinstance(sttmt, WhileStatement):
             break
 
     env.popScope()
@@ -76,7 +78,13 @@ def _interpret_blockstatement(node: BlockStatement, env: EnvType):
 
 @rule(Print)
 def _interpret_print(node: Print, env):
-    print(_getValue(node.expr, env))
+    expr = _getValue(node.expr, env)
+    if expr == r'\n':
+        print('\n', end='')
+    elif type(expr) == str:
+        print(expr, end='')
+    else:
+        print(expr)
 
 @rule(UnOp)
 def _interpret_unop(node: UnOp, env: EnvType):
@@ -108,7 +116,7 @@ def _interpret_binop(node: BinOp, env: EnvType):
         case '&&': result = leftval and rightval
         case '||': result = leftval or rightval
 
-    return result
+    return result if type(result) != bool else Bool(result)
 
 @rule(Location)
 def _interpret_location(node: Location, env: EnvType):
@@ -139,7 +147,9 @@ def _interpret_assignment(node: Assignment, env: EnvType):
 @rule(IfStatement)
 def _interpret_Ifstatement(node: IfStatement, env: EnvType):
     resp = None
-    if _interpret(node.cmp, env):
+    cmp = _interpret(node.cmp, env)
+    if isinstance(cmp, Bool): cmp = cmp.value
+    if cmp:
         resp = _interpret_blockstatement(node.block_if, env)
     elif node.block_else:
         resp = _interpret_blockstatement(node.block_else, env)
@@ -149,10 +159,14 @@ def _interpret_Ifstatement(node: IfStatement, env: EnvType):
 @rule(WhileStatement)
 def _interpret_whilestatement(node: WhileStatement, env: EnvType):
     resp = None
-    while _interpret(node.cmp, env):
+    cmp = _interpret(node.cmp, env)
+    if isinstance(cmp, Bool): cmp = cmp.value
+    while cmp:
         resp = _interpret_blockstatement(node.body, env)
         if isinstance(resp, Break): break
         if isinstance(resp, Continue): continue
+        cmp = _interpret(node.cmp, env)
+        if isinstance(cmp, Bool): cmp = cmp.value
 
     if resp: return resp
 
@@ -168,41 +182,41 @@ def _interpret_compoundexpression(node: CompoundExpression, env: EnvType):
     env.popScope()
     return expr
 
-@rule(Argument)
-def _interpret_argument(node: Argument, env: EnvType) -> DeclarationVar:
-    return DeclarationVar(
-        Location(node.name),
-        dtype = node.dtype
-    )
+# @rule(Argument)
+# def _interpret_argument(node: Argument, env: EnvType) -> DeclarationVar:
+#     return DeclarationVar(
+#         Location(node.name),
+#         dtype = node.dtype
+#     )
 
-@rule(ReturnStatement)
-def _interpret_returnstatement(node: ReturnStatement, env: EnvType):
-    return _getValue(node.value, env)
+# @rule(ReturnStatement)
+# def _interpret_returnstatement(node: ReturnStatement, env: EnvType):
+#     return _getValue(node.value, env)
 
-@rule(FunctionDefinition)
-def _interpret_functiondefinition(node: FunctionDefinition, env: EnvType):
-    env.addDefinition(node)
+# @rule(FunctionDefinition)
+# def _interpret_functiondefinition(node: FunctionDefinition, env: EnvType):
+#     env.addDefinition(node)
 
-@rule(FunctionApplication)
-def _interpret_functionapplication(node: FunctionApplication, env: EnvType):
-    resp = None
-    func: FunctionDefinition = env.getDefinition(node.name)
+# @rule(FunctionApplication)
+# def _interpret_functionapplication(node: FunctionApplication, env: EnvType):
+#     resp = None
+#     func: FunctionDefinition = env.getDefinition(node.name)
 
-    if func.params:
-        for i in range(len(func.params)):
-            param = _interpret_argument(func.params[i], env)
-            param.value = node.args[i]
-            func.statements.statements.insert(0, param)
-            print(func.statements.statements[0])
+#     if func.params:
+#         for i in range(len(func.params)):
+#             param = _interpret_argument(func.params[i], env)
+#             param.value = node.args[i]
+#             func.statements.statements.insert(0, param)
+#             print(func.statements.statements[0])
 
-    resp = _interpret_blockstatement(func.statements, env)
-    return resp if func.typeReturn != 'unit' else Unit().value
+#     resp = _interpret_blockstatement(func.statements, env)
+#     return resp if func.typeReturn != 'unit' else Unit().value
 
-@rule(Program)
-def _interpret_program(node: Program, env: EnvType):
-    for d in node.declarations:
-        _interpret(d, env)
-    _interpret_functionapplication(FunctionApplication('main'), env)
+# @rule(Program)
+# def _interpret_program(node: Program, env: EnvType):
+#     for d in node.declarations:
+#         _interpret(d, env)
+#     _interpret_functionapplication(FunctionApplication('main'), env)
 
 def interpret_program(model: Node):
     env = EnvType()

@@ -1,6 +1,6 @@
 from sly import Parser
-from tokenize import WabbitLexer
-from model import *
+from .tokenize import WabbitLexer
+from .model import *
 
 class WabbitParser(Parser):
     tokens = WabbitLexer.tokens
@@ -42,13 +42,13 @@ class WabbitParser(Parser):
         return Assignment(p.location, p.expr)
 
     @_('CONST location dtype ASSIGN expr SEMI',
-       'CONST assignment_statement')
+       'CONST location ASSIGN expr SEMI')
     def variable_definition(self, p):
         dtype = p.dtype if hasattr(p, 'dtype') else None
         return DeclarationConst(p.location, p.expr, dtype)
 
     @_('VAR location dtype ASSIGN expr SEMI',
-       'VAR assignment_statement',
+       'VAR location ASSIGN expr SEMI',
        'VAR location SEMI',
        'VAR location dtype SEMI')
     def const_definition(self, p):
@@ -112,7 +112,7 @@ class WabbitParser(Parser):
     def literal(self, p):
         if hasattr(p, 'INTEGER'): return Integer( int(p[0]) )
         if hasattr(p, 'FLOAT'): return Float( float(p[0]) )
-        if hasattr(p, 'CHAR'): return Char( p[0][1] )
+        if hasattr(p, 'CHAR'): return Char( p[0][1:-1] )
         if hasattr(p, 'TRUE'): return Bool( True )
         if hasattr(p, 'FALSE'): return Bool( False )
         return Unit()

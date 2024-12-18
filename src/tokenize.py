@@ -73,8 +73,8 @@ class WabbitLexer(Lexer):
 
     FLOAT = r'[0-9]+\.[0-9]+'
     INTEGER = r'[0-9]+'
-    CHAR = r"'((\S)|(\\x[0-9a-fA-F]{2})|(\\[n']))'"
-    UNCHAR = CHAR[-1]
+    CHAR = r"'((\\n)|(\\x[0-9a-fA-F]{2})|(\S))'"
+    UNCHAR = CHAR[:-1]
 
     PLUS = r'\+'
     MINUS = r'-'

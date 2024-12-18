@@ -30,7 +30,7 @@ class Char(Expression):
     '''
     def __init__(self, value: str):
         assert isinstance(value, str)
-        assert len(value) == 1
+        # assert len(value) == 1
         self.value = value
 
     def __repr__(self):
@@ -67,7 +67,7 @@ class Bool(Expression):
         self.value = value
 
     def __repr__(self):
-        return f"Bool({self.value})"
+        return 'true' if self.value else 'false'
 
 class Unit(Expression):
     '''
@@ -105,8 +105,8 @@ class BlockStatement(Node):
     '''
     def __init__(self, statements: list[Statement], tabs: int = 0):
         assert isinstance(statements, list)
-        for sttmt in statements:
-            assert isinstance(sttmt, Statement)
+        # for sttmt in statements:
+        #     assert isinstance(sttmt, Statement) or isinstance(sttmt, CompoundExpression)
         assert isinstance(tabs, int)
         self.statements = statements
         self.tabs = tabs
@@ -352,7 +352,7 @@ class _NodeVisitor:
         return node.value
 
     def visit_Char(self, node: Char):
-        return repr(node.value)
+        return repr(node.value) if node.value[0] != '\\' else f"'{node.value}'"
 
     def visit_Bool(self, node: Bool):
         return 'true' if node.value else 'false'
@@ -394,21 +394,17 @@ class _NodeVisitor:
         return f'{self.visit(node.location)} = {self.visit(node.value)};'
 
     def visit_IfStatement(self, node: IfStatement):
-        self.tabs += 1
         # tabs = ''.rjust(node.tabs * 4, ' ')
         tabs = ''.rjust(self.tabs * 4, ' ')
         block_if = f'if {self.visit(node.cmp)} {{\n{self.visit(node.block_if)}{tabs}}}'
         block_else = f' else {{\n{self.visit(node.block_else)}{tabs}}}' if node.block_else else ''
-        self.tabs -= 1
         return block_if + block_else
 
     def visit_WhileStatement(self, node: WhileStatement):
-        # self.tabs += 1
         # tabs = ''.rjust(node.tabs * 4, ' ')
         tabs = ''.rjust(self.tabs * 4, ' ')
         cmp = self.visit(node.cmp)
         body = self.visit(node.body)
-        # self.tabs -= 1
         return f'while {cmp} {{\n{body}{tabs}}}'
 
     def visit_CompoundExpression(self, node: CompoundExpression):
