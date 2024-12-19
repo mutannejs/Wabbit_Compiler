@@ -1,7 +1,7 @@
 from functools import singledispatch
 from typing import Any, List, Dict
 
-from .model import *
+from model import *
 
 class EnvDataType():
     def __init__(self, value: Any, changeble: bool, dtype: DType): # type: ignore
@@ -105,7 +105,9 @@ def _interpret_binop(node: BinOp, env: EnvType):
     match node.op:
         case '+': result = leftval + rightval
         case '-': result = leftval - rightval
-        case '/': result = leftval / rightval
+        case '/':
+            result = leftval / rightval
+            result = int(result) if type(leftval) == int else result
         case '*': result = leftval * rightval
         case '<': result = leftval < rightval
         case '>': result = leftval > rightval

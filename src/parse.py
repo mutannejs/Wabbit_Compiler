@@ -1,6 +1,6 @@
 from sly import Parser
-from .tokenize import WabbitLexer
-from .model import *
+from tokenize import WabbitLexer
+from model import *
 
 class WabbitParser(Parser):
     tokens = WabbitLexer.tokens
@@ -18,6 +18,10 @@ class WabbitParser(Parser):
     def statements(self, p):
         return BlockStatement(p.statement)
 
+    @_('LBRACE { statement } RBRACE')
+    def compound_expression(self, p):
+        return CompoundExpression(p.statement)
+
     @_('print_statement',
        'assignment_statement',
        'variable_definition',
@@ -28,10 +32,7 @@ class WabbitParser(Parser):
        'continue_statement',
        'expr SEMI')
     def statement(self, p):
-        if len(p) == 2:
-            return ('expr', p[0])
-        else:
-            return p[0]
+        return p[0]
 
     @_('PRINT expr SEMI')
     def print_statement(self, p):
@@ -92,7 +93,8 @@ class WabbitParser(Parser):
        'LNOT expr %prec UOP',
        'LPAREN expr RPAREN',
        'literal',
-       'location')
+       'location',
+       'compound_expression')
     def expr(self, p):
         if len(p) == 1:
             return p[0]
@@ -124,3 +126,7 @@ class WabbitParser(Parser):
     @_('NAME')
     def dtype(self, p):
         return p[0]
+
+    # @_('')
+    # def empty(self, p):
+    #     pass

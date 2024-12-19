@@ -3,11 +3,11 @@ from typing import Literal
 
 UnOperators = ['+', '-', '!']
 BinOperators = ['+', '-', '/', '*', '<', '>', '<=', '>=', '==', '!=', '&&', '||']
-DataTypes = ['int', 'float', 'bool', 'unit']
+DataTypes = ['int', 'float', 'bool', 'unit', 'char']
 
 OpUnType = Literal['+', '-', '!']
 OpBinType = Literal['+', '-', '/', '*', '<', '>', '<=', '>=', '==', '!=', '&&', '||']
-DType = Literal['int', 'float', 'bool', 'unit']
+DType = Literal['int', 'float', 'bool', 'unit', 'char']
 
 
 class Node:
@@ -246,9 +246,9 @@ class CompoundExpression(Expression):
     '''
     def __init__(self, instructions: list[Statement | Expression]):
         assert isinstance(instructions, list)
-        for inst in instructions[:-1]:
-            assert isinstance(inst, Statement)
-        assert isinstance(instructions[-1], Expression) or isinstance(instructions[-1], Statement)
+        # for inst in instructions[:-1]:
+            # assert isinstance(inst, Statement)
+        # assert isinstance(instructions[-1], Expression) or isinstance(instructions[-1], Statement)
         self.instructions = instructions
 
     def __repr__(self):
