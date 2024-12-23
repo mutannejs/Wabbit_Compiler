@@ -1,3 +1,4 @@
+# type: ignore
 import sys
 sys.path.insert(0, 'sly.zip')
 from sly import Lexer
@@ -73,7 +74,7 @@ class WabbitLexer(Lexer):
 
     FLOAT = r'[0-9]+\.[0-9]+'
     INTEGER = r'[0-9]+'
-    CHAR = r"'((\\n)|(\\x[0-9a-fA-F]{2})|(\S))'"
+    CHAR = r"'((.)|(\\x[0-9a-fA-F]{2})|(\\[abfnrtv]))'"
     UNCHAR = CHAR[:-1]
 
     PLUS = r'\+'

@@ -1,7 +1,7 @@
 from functools import singledispatch
 from typing import Any, List, Dict
 
-from model import *
+from .model import *
 
 class EnvDataType():
     def __init__(self, value: Any, changeble: bool, dtype: DType): # type: ignore
@@ -76,8 +76,8 @@ def _interpret_blockstatement(node: BlockStatement, env: EnvType):
     env.popScope()
     return resp if resp else Unit()
 
-@rule(Print)
-def _interpret_print(node: Print, env):
+@rule(PrintStatement)
+def _interpret_print(node: PrintStatement, env):
     expr = _getValue(node.expr, env)
     if expr == r'\n':
         print('\n', end='')
@@ -124,9 +124,9 @@ def _interpret_binop(node: BinOp, env: EnvType):
 def _interpret_location(node: Location, env: EnvType):
     return env.getData(node.name)
 
-@rule(DeclarationVar)
-@rule(DeclarationConst)
-def _interpret_declaration(node: DeclarationVar | DeclarationConst, env: EnvType):
+@rule(VarDefinition)
+@rule(ConstDefinition)
+def _interpret_declaration(node: VarDefinition | ConstDefinition, env: EnvType):
     name = node.location.name
     dtype = value = None
 
@@ -137,11 +137,11 @@ def _interpret_declaration(node: DeclarationVar | DeclarationConst, env: EnvType
     if dtype == None:
         dtype = node.dtype
 
-    changeble = True if isinstance(node, DeclarationVar) else False
+    changeble = True if isinstance(node, VarDefinition) else False
     env.addData(name, EnvDataType(value, changeble, dtype))
 
-@rule(Assignment)
-def _interpret_assignment(node: Assignment, env: EnvType):
+@rule(AssignmentStatement)
+def _interpret_assignment(node: AssignmentStatement, env: EnvType):
     location = env.getData(node.location.name)
     if location:
         location.value = _getValue(node.value, env)

@@ -37,7 +37,7 @@ class _NodeVisitor:
     def visit_Continue(self, node: Continue):
         return 'continue;'
 
-    def visit_Print(self, node: Print):
+    def visit_PrintStatement(self, node: PrintStatement):
         return f'print {self.visit(node.expr)};'
 
     def visit_UnOp(self, node: UnOp):
