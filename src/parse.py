@@ -55,7 +55,6 @@ class WabbitParser(Parser):
 
     @_('VAR location dtype ASSIGN expr SEMI',
        'VAR location ASSIGN expr SEMI',
-       'VAR location SEMI',
        'VAR location dtype SEMI',
        )
     def variable_definition(self, p):
@@ -123,7 +122,11 @@ class WabbitParser(Parser):
     def literal(self, p):
         if hasattr(p, 'INTEGER'): return Integer( int(p[0]) )
         if hasattr(p, 'FLOAT'): return Float( float(p[0]) )
-        if hasattr(p, 'CHAR'): return Char( p[0][1:-1] )
+        if hasattr(p, 'CHAR'):
+            char = p[0][1:-1]
+            if len(char) != 1:
+                char = chr( int( char.replace('\\x', '0x'), 16 ) )
+            return Char( char )
         if hasattr(p, 'TRUE'): return Bool( True )
         if hasattr(p, 'FALSE'): return Bool( False )
         return Unit()

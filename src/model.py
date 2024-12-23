@@ -26,8 +26,19 @@ class LiteralT(Expression):
     def __repr__(self):
         return f'{self.value}'
 
-class Definition(Node):
-    pass
+class Integer(LiteralT):
+    '''
+    Example: 42
+    '''
+    def __init__(self, value: int | None):
+        super().__init__(value)
+
+class Float(LiteralT):
+    '''
+    Example: 3.4
+    '''
+    def __init__(self, value: float | None):
+        super().__init__(value)
 
 class Char(LiteralT):
     '''
@@ -35,32 +46,18 @@ class Char(LiteralT):
              'x\ff'
              '\n'
     '''
-    def __init__(self, value: str):
+    def __init__(self, value: str | None):
         super().__init__(value)
 
     def __repr__(self):
-        return f"'{self.value}'"
-
-class Integer(LiteralT):
-    '''
-    Example: 42
-    '''
-    def __init__(self, value: int):
-        super().__init__(value)
-
-class Float(LiteralT):
-    '''
-    Example: 3.4
-    '''
-    def __init__(self, value: float):
-        super().__init__(value)
+        return f"{self.value}"
 
 class Bool(LiteralT):
     '''
     Example: true
              false
     '''
-    def __init__(self, value: bool):
+    def __init__(self, value: bool | None):
         assert type(value) == bool
         super().__init__(value)
 
@@ -113,7 +110,7 @@ class UnOp(Expression):
     '''
     def __init__(self, op: UnOpType, expr: Expression):
         assert op in UnOperators
-        assert isinstance(expr, Expression)
+        assert isinstance(expr, Expression) and not isinstance(expr, Char)
         self.op = op
         self.expr = expr
 
@@ -166,7 +163,7 @@ class ConstDefinition(Statement):
     '''
     const c = true;
     '''
-    def __init__(self, location: Location, value: Expression, dtype: DType = None): # type: ignore
+    def __init__(self, location: Location, value: Expression, dtype: DType = None):
         assert isinstance(location, Location)
         if dtype: assert dtype in DataTypes
         assert isinstance(value, Expression)
