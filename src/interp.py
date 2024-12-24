@@ -1,23 +1,30 @@
-from collections import ChainMap
 from functools import singledispatch
 
 from .model import *
 
 class Env:
     def __init__(self):
-        self.stack = ChainMap({})
+        self.stack = [{}]
 
     def newScope(self):
-        self.stack = self.stack.new_child({})
+        self.stack.append({})
 
     def popScope(self):
-        self.stack = self.stack.parents
+        self.stack.pop()
+
+    def createRegister(self, name: str, data: Node | None):
+        self.stack[0][name] = data
 
     def setRegister(self, name: str, data: Node):
-        self.stack.maps[0][name] = data
+        for i in range( len(self.stack) ):
+            if self.stack[i].get(name):
+                self.stack[i][name] = data
+                break
 
     def getRegister(self, name: str) -> Node | None:
-        return self.stack.get(name)
+        for i in range( len(self.stack) ):
+            reg = self.stack[i].get(name)
+            if reg: return reg
 
 
 def interpret_program(model: Node):
@@ -31,6 +38,9 @@ def interpret_program(model: Node):
 
 def getLiteralFromExpr(node: Expression, env):
     return node if isinstance(node, LiteralT) else _interpret(node, env)
+
+def copyLiteral(node: LiteralT):
+    return node.__class__(node.value)
 
 
 @singledispatch
@@ -47,10 +57,10 @@ rule = _interpret.register
 def _interpret_literal(node: Integer | Float | Char | Bool | Unit, env: Env):
     return node.value
 
-# @rule(Break)
-# @rule(Continue)
-# def _interpret_breakcontinue(node: Break | Continue, env: Env):
-#     return node
+@rule(Break)
+@rule(Continue)
+def _interpret_breakcontinue(node: Break | Continue, env: Env):
+    pass
 
 @rule(PrintStatement)
 def _interpret_print(node: PrintStatement, env):
@@ -63,7 +73,7 @@ def _interpret_print(node: PrintStatement, env):
 
 @rule(UnOp)
 def _interpret_unop(node: UnOp, env: Env) -> LiteralT:
-    expr = getLiteralFromExpr(node.expr, env)
+    expr = copyLiteral( getLiteralFromExpr(node.expr, env) )
 
     if node.op == '-':
         expr.value = -1 * expr.value
@@ -77,7 +87,8 @@ def _interpret_binop(node: BinOp, env: Env):
     left = getLiteralFromExpr(node.left, env)
     right = getLiteralFromExpr(node.right, env)
 
-    res = left
+    res = copyLiteral(left)
+
     match node.op:
         case '+': res.value = left.value + right.value
         case '-': res.value = left.value - right.value
@@ -116,65 +127,57 @@ def _interpret_definition(node: VarDefinition | ConstDefinition, env: Env):
             case 'bool': value = Bool(None)
             case 'unit': value = Unit(None)
 
-    env.setRegister(name, value)
+    env.createRegister(name, value)
 
 @rule(AssignmentStatement)
 def _interpret_assignment(node: AssignmentStatement, env: Env):
-    env.setRegister( node.location.name, getLiteralFromExpr(node.value) )
+    nodeval = getLiteralFromExpr(node.value, env)
+    env.setRegister( node.location.name, nodeval )
 
 @rule(BlockStatement)
 def _interpret_blockstatement(node: BlockStatement, env: Env):
-    # resp = None
+    resp = None
     env.newScope()
 
     for inst in node.instructions:
-        # resp = _interpret(sttmt, env)
-        _interpret(inst, env)
-        # if isinstance(sttmt, ReturnStatement):
-        #     break
-        # if ( isinstance(resp, Break) or isinstance(resp, Continue) ) and not isinstance(sttmt, WhileStatement):
-        #     break
+        resp = _interpret(inst, env)
+        if isinstance(resp, Break) or isinstance(resp, Continue):
+            break
 
     env.popScope()
-    # return resp if resp else Unit()
+    return resp
 
-# @rule(IfStatement)
-# def _interpret_Ifstatement(node: IfStatement, env: Env):
-#     resp = None
-#     cmp = _interpret(node.cmp, env)
-#     if isinstance(cmp, Bool): cmp = cmp.value
-#     if cmp:
-#         resp = _interpret_blockstatement(node.block_if, env)
-#     elif node.block_else:
-#         resp = _interpret_blockstatement(node.block_else, env)
+@rule(IfStatement)
+def _interpret_Ifstatement(node: IfStatement, env: Env):
+    resp = None
+    cmp = getLiteralFromExpr(node.cmp, env)
+    if _interpret(cmp, env):
+        resp = _interpret_blockstatement(node.block_if, env)
+    elif node.block_else:
+        resp = _interpret_blockstatement(node.block_else, env)
 
-#     if resp: return resp
+    return resp
 
-# @rule(WhileStatement)
-# def _interpret_whilestatement(node: WhileStatement, env: Env):
-#     resp = None
-#     cmp = _interpret(node.cmp, env)
-#     if isinstance(cmp, Bool): cmp = cmp.value
-#     while cmp:
-#         resp = _interpret_blockstatement(node.body, env)
-#         if isinstance(resp, Break): break
-#         if isinstance(resp, Continue): continue
-#         cmp = _interpret(node.cmp, env)
-#         if isinstance(cmp, Bool): cmp = cmp.value
+@rule(WhileStatement)
+def _interpret_whilestatement(node: WhileStatement, env: Env):
+    cmp = getLiteralFromExpr(node.cmp, env)
+    while _interpret(cmp, env):
+        resp = _interpret_blockstatement(node.body, env)
+        if isinstance(resp, Break): break
+        if isinstance(resp, Continue): continue
+        cmp = getLiteralFromExpr(node.cmp, env)
 
-#     if resp: return resp
+@rule(CompoundExpression)
+def _interpret_compoundexpression(node: CompoundExpression, env: Env):
+    env.newScope()
 
-# @rule(CompoundExpression)
-# def _interpret_compoundexpression(node: CompoundExpression, env: Env):
-#     env.newScope()
+    for inst in node.instructions[:-1]:
+        _interpret(inst, env)
 
-#     for inst in node.instructions[:-1]:
-#         _interpret(inst, env)
+    expr = getLiteralFromExpr( node.instructions[-1], env )
 
-#     expr = _getValue(node.instructions[-1], env)
-
-#     env.popScope()
-#     return expr
+    env.popScope()
+    return expr
 
 # @rule(Argument)
 # def _interpret_argument(node: Argument, env: Env) -> DeclarationVar:

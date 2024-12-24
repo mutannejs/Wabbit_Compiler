@@ -124,7 +124,7 @@ class WabbitParser(Parser):
         if hasattr(p, 'FLOAT'): return Float( float(p[0]) )
         if hasattr(p, 'CHAR'):
             char = p[0][1:-1]
-            if len(char) != 1:
+            if len(char) == 4:
                 char = chr( int( char.replace('\\x', '0x'), 16 ) )
             return Char( char )
         if hasattr(p, 'TRUE'): return Bool( True )
