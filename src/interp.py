@@ -7,10 +7,10 @@ class Env:
         self.stack = [{}]
 
     def newScope(self):
-        self.stack.append({})
+        self.stack.insert(0, {})
 
     def popScope(self):
-        self.stack.pop()
+        self.stack.pop(0)
 
     def createRegister(self, name: str, data: Node | None):
         self.stack[0][name] = data
@@ -36,6 +36,9 @@ def interpret_program(model: Node):
     _interpret(model, env)
 
 
+inf_int = 2147483647
+inf_float = 1.7e+308
+
 def getLiteralFromExpr(node: Expression, env):
     return node if isinstance(node, LiteralT) else _interpret(node, env)
 
@@ -60,16 +63,15 @@ def _interpret_literal(node: Integer | Float | Char | Bool | Unit, env: Env):
 @rule(Break)
 @rule(Continue)
 def _interpret_breakcontinue(node: Break | Continue, env: Env):
-    pass
+    return node
 
 @rule(PrintStatement)
 def _interpret_print(node: PrintStatement, env):
-    if isinstance(node.expr, Char):
-        print(node.expr if node.expr.value != r'\n' else '\n', end='')
-    elif isinstance(node.expr, LiteralT):
-        print( node.expr )
+    expr = getLiteralFromExpr( node.expr , env )
+    if isinstance(expr, Char):
+        print(expr if expr.value != '\\n' else '\n', end='')
     else:
-        print( _interpret(node.expr, env) )
+        print( expr )
 
 @rule(UnOp)
 def _interpret_unop(node: UnOp, env: Env) -> LiteralT:
@@ -93,8 +95,11 @@ def _interpret_binop(node: BinOp, env: Env):
         case '+': res.value = left.value + right.value
         case '-': res.value = left.value - right.value
         case '/':
-            res.value = left.value / right.value
-            if isinstance(left, Integer): res.value = int(res.value)
+            if right.value == 0:
+                res.value = inf_int if isinstance(right, Integer) else inf_float
+            else:
+                res.value = left.value / right.value
+                if isinstance(left, Integer): res.value = int(res.value)
         case '*': res.value = left.value * right.value
         case '<': res = Bool(left.value < right.value)
         case '>': res = Bool(left.value > right.value)
@@ -125,7 +130,7 @@ def _interpret_definition(node: VarDefinition | ConstDefinition, env: Env):
             case 'float': value = Float(None)
             case 'char': value = Char(None)
             case 'bool': value = Bool(None)
-            case 'unit': value = Unit(None)
+            case 'unit': value = Unit()
 
     env.createRegister(name, value)
 

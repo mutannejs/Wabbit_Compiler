@@ -15,7 +15,9 @@ Compilador da linguagem **Wabbit**. Feito para a matéria Laboratório de Compil
 1. [X] realizar mais testes para o Lexer
 1. [X] adicionar `break` e `continue` no modelo
 1. [X] criar Parse
-1. [ ] arrumar o Parse e funções como to_source e tokenize
+1. [X] arrumar o Parse e funções como to_source e tokenize
+1. [ ] avaliação de tipos
+1. [ ] coerção explícita
 1. [ ] rever o modelo do WabbitFunc
 1. [ ] implementar o interp para WabbitFunc
 1. [ ] implementar WabbitType

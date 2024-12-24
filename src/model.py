@@ -58,7 +58,6 @@ class Bool(LiteralT):
              false
     '''
     def __init__(self, value: bool | None):
-        assert type(value) == bool
         super().__init__(value)
 
     def __repr__(self):
@@ -68,7 +67,7 @@ class Unit(LiteralT):
     '''
     Example: ()
     '''
-    def __init__(self):
+    def __init__(self, value = '()'):
         super().__init__('()')
 
 class Break(Statement):
