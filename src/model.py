@@ -11,7 +11,8 @@ DType = Literal['int', 'float', 'bool', 'unit', 'char']
 
 
 class Node:
-    pass
+    def __init__(self, lineno: int):
+        self.lineno = lineno
 
 class Statement(Node):
     pass
@@ -20,7 +21,8 @@ class Expression(Node):
     pass
 
 class LiteralT(Expression):
-    def __init__(self, value):
+    def __init__(self, lineno: int, value):
+        super().__init__(lineno)
         self.value = value
 
     def __repr__(self):
@@ -30,15 +32,15 @@ class Integer(LiteralT):
     '''
     Example: 42
     '''
-    def __init__(self, value: int | None):
-        super().__init__(value)
+    def __init__(self, lineno: int, value: int | None):
+        super().__init__(lineno, value)
 
 class Float(LiteralT):
     '''
     Example: 3.4
     '''
-    def __init__(self, value: float | None):
-        super().__init__(value)
+    def __init__(self, lineno: int, value: float | None):
+        super().__init__(lineno, value)
 
 class Char(LiteralT):
     '''
@@ -46,8 +48,8 @@ class Char(LiteralT):
              'x\ff'
              '\n'
     '''
-    def __init__(self, value: str | None):
-        super().__init__(value)
+    def __init__(self, lineno: int, value: str | None):
+        super().__init__(lineno, value)
 
     def __repr__(self):
         return f"{self.value}"
@@ -57,8 +59,8 @@ class Bool(LiteralT):
     Example: true
              false
     '''
-    def __init__(self, value: bool | None):
-        super().__init__(value)
+    def __init__(self, lineno: int, value: bool | None):
+        super().__init__(lineno, value)
 
     def __repr__(self):
         return 'true' if self.value else 'false'
@@ -67,15 +69,15 @@ class Unit(LiteralT):
     '''
     Example: ()
     '''
-    def __init__(self, value = '()'):
-        super().__init__('()')
+    def __init__(self, lineno: int, value = '()'):
+        super().__init__(lineno, '()')
 
 class Break(Statement):
     '''
     break;
     '''
-    def __init__(self):
-        pass
+    def __init__(self, lineno: int):
+        super().__init__(lineno)
 
     def __repr__(self):
         return 'Break()'
@@ -84,8 +86,8 @@ class Continue(Statement):
     '''
     continue;
     '''
-    def __init__(self):
-        pass
+    def __init__(self, lineno: int):
+        super().__init__(lineno)
 
     def __repr__(self):
         return 'Continue()'
@@ -95,8 +97,9 @@ class PrintStatement(Statement):
     Example: print 'h'
              print 5 + 9
     '''
-    def __init__(self, expr: Expression):
-        assert isinstance(expr, Expression)
+    def __init__(self, lineno: int, expr: Expression):
+        super().__init__(lineno)
+        # assert isinstance(expr, Expression)
         self.expr = expr
 
     def __repr__(self):
@@ -107,9 +110,10 @@ class UnOp(Expression):
     Example: -5
              !expr
     '''
-    def __init__(self, op: UnOpType, expr: Expression):
-        assert op in UnOperators
-        assert isinstance(expr, Expression) and not isinstance(expr, Char)
+    def __init__(self, lineno: int, op: UnOpType, expr: Expression):
+        super().__init__(lineno)
+        # assert op in UnOperators
+        # assert isinstance(expr, Expression) and not isinstance(expr, Char)
         self.op = op
         self.expr = expr
 
@@ -121,10 +125,11 @@ class BinOp(Expression):
     Example: 3 + 4
              a < 100.0
     '''
-    def __init__(self, op: BinOpType, left: Expression, right: Expression):
-        assert op in BinOperators
-        assert isinstance(left, Expression)
-        assert isinstance(right, Expression)
+    def __init__(self, lineno: int, op: BinOpType, left: Expression, right: Expression):
+        super().__init__(lineno)
+        # assert op in BinOperators
+        # assert isinstance(left, Expression)
+        # assert isinstance(right, Expression)
         self.op = op
         self.left = left
         self.right = right
@@ -137,7 +142,8 @@ class Location(Expression):
     Example: a
              loc
     '''
-    def __init__(self, name: str):
+    def __init__(self, lineno: int, name: str):
+        super().__init__(lineno)
         self.name = name
 
     def __repr__(self):
@@ -147,10 +153,11 @@ class VarDefinition(Statement):
     '''
     var c bool = true;
     '''
-    def __init__(self, location: Location, value: Expression = None, dtype: DType = None):
-        assert isinstance(location, Location)
-        if value: assert isinstance(value, Expression)
-        if dtype: assert dtype in DataTypes
+    def __init__(self, lineno: int, location: Location, value: Expression = None, dtype: DType = None):
+        super().__init__(lineno)
+        # assert isinstance(location, Location)
+        # if value: assert isinstance(value, Expression)
+        # if dtype: assert dtype in DataTypes
         self.location = location
         self.dtype = dtype
         self.value = value
@@ -162,10 +169,11 @@ class ConstDefinition(Statement):
     '''
     const c = true;
     '''
-    def __init__(self, location: Location, value: Expression, dtype: DType = None):
-        assert isinstance(location, Location)
-        if dtype: assert dtype in DataTypes
-        assert isinstance(value, Expression)
+    def __init__(self, lineno: int, location: Location, value: Expression, dtype: DType = None):
+        super().__init__(lineno)
+        # assert isinstance(location, Location)
+        # if dtype: assert dtype in DataTypes
+        # assert isinstance(value, Expression)
         self.location = location
         self.dtype = dtype
         self.value = value
@@ -177,9 +185,10 @@ class AssignmentStatement(Statement):
     '''
     Example: r = 2.0;
     '''
-    def __init__(self, location: Location, value: Expression):
-        assert isinstance(location, Location)
-        assert isinstance(value, Expression)
+    def __init__(self, lineno: int, location: Location, value: Expression):
+        super().__init__(lineno)
+        # assert isinstance(location, Location)
+        # assert isinstance(value, Expression)
         self.location = location
         self.value = value
 
@@ -190,7 +199,8 @@ class BlockStatement(Node):
     '''
     Example: a = 1; a = 2;
     '''
-    def __init__(self, instructions: list):
+    def __init__(self, lineno: int, instructions: list):
+        super().__init__(lineno)
         self.instructions = instructions
 
     def __repr__(self):
@@ -200,10 +210,11 @@ class IfStatement(Statement):
     '''
     Example: if a > 0.0 { print a; } else { print -a; }
     '''
-    def __init__(self, cmp: Expression, block_if: BlockStatement, block_else: BlockStatement = None):
-        assert isinstance(cmp, Expression)
-        assert isinstance(block_if, BlockStatement)
-        if block_else: assert isinstance(block_else, BlockStatement)
+    def __init__(self, lineno: int, cmp: Expression, block_if: BlockStatement, block_else: BlockStatement = None):
+        super().__init__(lineno)
+        # assert isinstance(cmp, Expression)
+        # assert isinstance(block_if, BlockStatement)
+        # if block_else: assert isinstance(block_else, BlockStatement)
         self.cmp = cmp
         self.block_if = block_if
         self.block_else = block_else
@@ -215,9 +226,10 @@ class IfStatement(Statement):
             return f'IfStatement({self.cmp}, {self.block_if})'
 
 class WhileStatement(Statement):
-    def __init__(self, cmp: Expression, body: BlockStatement):
-        assert isinstance(cmp, Expression)
-        assert isinstance(body, BlockStatement)
+    def __init__(self, lineno: int, cmp: Expression, body: BlockStatement):
+        super().__init__(lineno)
+        # assert isinstance(cmp, Expression)
+        # assert isinstance(body, BlockStatement)
         self.cmp = cmp
         self.body = body
 
@@ -228,7 +240,8 @@ class CompoundExpression(Expression):
     '''
     Example: { var t = y; y = x; t; };
     '''
-    def __init__(self, instructions: list):
+    def __init__(self, lineno: int, instructions: list):
+        super().__init__(lineno)
         self.instructions = instructions
 
     def __repr__(self):

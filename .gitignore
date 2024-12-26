@@ -2,7 +2,6 @@ __pycache__/
 wabbit_compiler/
 .assets/
 build/
+examples/
 src/sly.zip
-index_teste.py
-examples.py
-teste.py
+.teste.py

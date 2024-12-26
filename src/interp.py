@@ -43,7 +43,7 @@ def getLiteralFromExpr(node: Expression, env):
     return node if isinstance(node, LiteralT) else _interpret(node, env)
 
 def copyLiteral(node: LiteralT):
-    return node.__class__(node.value)
+    return node.__class__(node.lineno, node.value)
 
 
 @singledispatch
@@ -101,14 +101,14 @@ def _interpret_binop(node: BinOp, env: Env):
                 res.value = left.value / right.value
                 if isinstance(left, Integer): res.value = int(res.value)
         case '*': res.value = left.value * right.value
-        case '<': res = Bool(left.value < right.value)
-        case '>': res = Bool(left.value > right.value)
-        case '<=': res = Bool(left.value <= right.value)
-        case '>=': res = Bool(left.value >= right.value)
-        case '==': res = Bool(left.value == right.value)
-        case '!=': res = Bool(left.value != right.value)
-        case '&&': res = Bool(left.value and right.value)
-        case '||': res = Bool(left.value or right.value)
+        case '<': res = Bool(node.lineno, left.value < right.value)
+        case '>': res = Bool(node.lineno, left.value > right.value)
+        case '<=': res = Bool(node.lineno, left.value <= right.value)
+        case '>=': res = Bool(node.lineno, left.value >= right.value)
+        case '==': res = Bool(node.lineno, left.value == right.value)
+        case '!=': res = Bool(node.lineno, left.value != right.value)
+        case '&&': res = Bool(node.lineno, left.value and right.value)
+        case '||': res = Bool(node.lineno, left.value or right.value)
 
     return res
 
@@ -126,11 +126,11 @@ def _interpret_definition(node: VarDefinition | ConstDefinition, env: Env):
     else:
         dtype: DType = node.dtype
         match dtype:
-            case 'int': value = Integer(None)
-            case 'float': value = Float(None)
-            case 'char': value = Char(None)
-            case 'bool': value = Bool(None)
-            case 'unit': value = Unit()
+            case 'int': value = Integer(node.lineno, None)
+            case 'float': value = Float(node.lineno, None)
+            case 'char': value = Char(node.lineno, None)
+            case 'bool': value = Bool(node.lineno, None)
+            case 'unit': value = Unit(node.lineno)
 
     env.createRegister(name, value)
 
