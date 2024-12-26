@@ -26,8 +26,11 @@ for i in range( len(examples[:]) ):
 
     print(f'\n\n========= Exemplo {i} =========')
     tokens = tokenize(ex)
+
     # for tok in tokens:
     #     print(tok)
+    # continue
+
     res = WabbitParser().parse( tokens )
     print( res, end='\n\n' )
     print( to_source(res) )
