@@ -75,7 +75,7 @@ def check_program(model):
     has_errors = False
     env = Env()
     _check(model, env)
-    return not has_errors
+    return not has_errors, model
 
 def _binops(left: DType, op: BinOpType, right: DType) -> DType | None:
     if left != right:
@@ -91,6 +91,8 @@ def _binops(left: DType, op: BinOpType, right: DType) -> DType | None:
         case 'char':
             if op in ['<', '<=', '>', '>=', '==', '!=']: return 'bool'
         case 'bool':
+            if op in ['==', '!=', '&&', '||']: return 'bool'
+        case 'unit':
             if op in ['==', '!=', '&&', '||']: return 'bool'
 
     return None
@@ -118,11 +120,15 @@ rule = _check.register
 @rule(Bool)
 @rule(Unit)
 def _check_literal(node: LiteralT, env: Env):
-    if isinstance(node, Integer): return "int"
-    if isinstance(node, Float): return "float"
-    if isinstance(node, Char): return "char"
-    if isinstance(node, Bool): return "bool"
-    if isinstance(node, Unit): return "unit"
+    dtype = None
+    if isinstance(node, Integer): dtype = "int"
+    if isinstance(node, Float): dtype = "float"
+    if isinstance(node, Char): dtype = "char"
+    if isinstance(node, Bool): dtype = "bool"
+    if isinstance(node, Unit): dtype = "unit"
+
+    node.p_type = dtype
+    return dtype
 
 @rule(BinOp)
 def _check_binop(node: BinOp, env: Env):
@@ -133,6 +139,8 @@ def _check_binop(node: BinOp, env: Env):
     if not result_type:
         error(node.lineno, f"Unsupported operation: {left_type} {node.op} {right_type}")
 
+    node.p_type = 'bool' if node.op in ['<', '>', '<=', '>=', '==', '!=', '&&', '||'] else right_type
+
     return result_type
 
 @rule(UnOp)
@@ -142,6 +150,8 @@ def _check_unop(node: UnOp, env: Env):
     result_type = _unops(node.op, expr_type)
     if not result_type:
         error(node.lineno, f"Unsupported operation: {node.op}{expr_type}")
+
+    node.p_type = expr_type
 
     return result_type
 
@@ -156,6 +166,8 @@ def _check_location(node: Location, env: Env):
     ty = env.getRegister(node.name)
     if not ty:
         error(node.lineno, f"{node.name} not defined!")
+
+    node.p_type = ty
 
     return ty
 
@@ -241,6 +253,9 @@ def _check_compoundexpression(node: CompoundExpression, env: Env):
     r_type = _check(node.instructions[-1], env)
 
     env.popScope()
+
+    node.p_type = r_type
+
     return r_type;
 
 @rule(BlockStatement)

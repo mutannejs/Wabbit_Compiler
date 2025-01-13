@@ -3,5 +3,6 @@ wabbit_compiler/
 .assets/
 build/
 examples/
+langc/
 src/sly.zip
 .teste.py
