@@ -5,25 +5,25 @@ from src.typecheck import check_program
 from src.interp import *
 from src.c import compile_program
 
-# from examples.examples_parse import examples
+from examples.examples_parse import examples
 
-examples = [
+# examples = [
 
-r"""var a int = 5.5;
-const b = 10;
-var i = { (b / 10) - 1; };
-while i < 10.0 {
-    print i;
-    if () {
-        print false;
-        continue;
-    }
-    i = i + 1;
-}
-break;
-"""
+# r"""var a int = 5.5;
+# const b = 10;
+# var i = { (b / 10) - 1; };
+# while i < 10.0 {
+#     print i;
+#     if () {
+#         print false;
+#         continue;
+#     }
+#     i = i + 1;
+# }
+# break;
+# """
 
-]
+# ]
 
 for i in range( len(examples[:]) ):
     ex = examples[i]

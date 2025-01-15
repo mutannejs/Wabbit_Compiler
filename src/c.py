@@ -157,13 +157,31 @@ def _compile_print_statement(node: PrintStatement, ctx: Context):
         expr_value = name
 
     match node.expr.p_type:
-        case 'bool': format_specifier = 'd'
         case 'char': format_specifier = 'c'
         case 'float': format_specifier = 'f'
         case 'int': format_specifier = 'd'
 
     if node.expr.p_type == 'unit':
         ctx.append(f'printf("()\\n");')
+    elif node.expr.p_type == 'bool':
+        block_true_l = ctx.new_label()
+        block_false_l = ctx.new_label()
+        return_l = ctx.new_label()
+
+        cmp = ctx.new_temporary('bool')
+        ctx.append(f'{cmp} = {expr_value} == 1;')
+        ctx.append(f'if ({cmp}) goto {block_true_l};')
+        ctx.append(f'goto {block_false_l};')
+
+        ctx.append(f'{block_true_l}:', True)
+        ctx.append(f'printf("true\\n");')
+        ctx.append(f'goto {return_l};')
+
+        ctx.append(f'{block_false_l}:', True)
+        ctx.append(f'printf("false\\n");')
+        ctx.append(f'goto {return_l};')
+
+        ctx.append(f'{return_l}:', True)
     else:
         end = '' if format_specifier == 'c' else '\\n'
         ctx.append(f'printf("%{format_specifier}{end}", {expr_value});')
