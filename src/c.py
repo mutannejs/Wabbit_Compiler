@@ -112,25 +112,58 @@ def _compile_literal(node: LiteralT, ctx: Context):
 
 @rule(BinOp)
 def _compile_binop(node: BinOp, ctx: Context):
+    lineno = node.lineno
     left_val = _compile(node.left, ctx)
-    right_val = _compile(node.right, ctx)
+    tempname = ctx.new_temporary(node.p_type)
 
     match node.op:
-        case '+': resultval = f'{left_val} + {right_val}'
-        case '-': resultval = f'{left_val} - {right_val}'
-        case '/': resultval = f'{left_val} / {right_val}'
-        case '*': resultval = f'{left_val} * {right_val}'
-        case '<': resultval = f'{left_val} < {right_val}'
-        case '>': resultval = f'{left_val} > {right_val}'
-        case '<=': resultval = f'{left_val} <= {right_val}'
-        case '>=': resultval = f'{left_val} >= {right_val}'
-        case '==': resultval = f'{left_val} == {right_val}'
-        case '!=': resultval = f'{left_val} != {right_val}'
-        case '&&': resultval = f'{left_val} && {right_val}'
-        case '||': resultval = f'{left_val} || {right_val}'
+        case '+': resultval = f'{left_val} + {_compile(node.right, ctx)}'
+        case '-': resultval = f'{left_val} - {_compile(node.right, ctx)}'
+        case '/': resultval = f'{left_val} / {_compile(node.right, ctx)}'
+        case '*': resultval = f'{left_val} * {_compile(node.right, ctx)}'
+        case '<': resultval = f'{left_val} < {_compile(node.right, ctx)}'
+        case '>': resultval = f'{left_val} > {_compile(node.right, ctx)}'
+        case '<=': resultval = f'{left_val} <= {_compile(node.right, ctx)}'
+        case '>=': resultval = f'{left_val} >= {_compile(node.right, ctx)}'
+        case '==': resultval = f'{left_val} == {_compile(node.right, ctx)}'
+        case '!=': resultval = f'{left_val} != {_compile(node.right, ctx)}'
+        case '&&':
+            _compile_ifstatement(
+                IfStatement(
+                    lineno,
+                    node.left,
+                    BlockStatement(
+                        lineno,
+                        [node.right if not isinstance(node.right, Bool) else \
+                            AssignmentStatement(lineno, Location(lineno, tempname), node.right)]
+                    ),
+                    BlockStatement(
+                        lineno,
+                        [AssignmentStatement(lineno, Location(lineno, tempname), Bool(lineno, False))]
+                    )
+                ), ctx
+            )
+            return tempname
+        case '||':
+            _compile_ifstatement(
+                IfStatement(
+                    lineno,
+                    node.left,
+                    BlockStatement(
+                        lineno,
+                        [AssignmentStatement(lineno, Location(lineno, tempname), Bool(lineno, True))]
+                    ),
+                    BlockStatement(
+                        lineno,
+                        [node.right if not isinstance(node.right, Bool) else \
+                            AssignmentStatement(lineno, Location(lineno, tempname), node.right)]
+                    )
+                ), ctx
+            )
 
-    tempname = ctx.new_temporary(node.p_type)
-    ctx.append(f'{tempname} = {resultval};')
+    if not node.op == '||' and not node.op == '&&':
+        ctx.append(f'{tempname} = {resultval};')
+
     return tempname
 
 @rule(UnOp)

@@ -9,6 +9,16 @@ from examples.examples_parse import examples
 
 # examples = [
 
+# '''// Short-circuit evaluation
+# // Note: Implementing this is likely to be tricky/messy.
+# // Come back to it later if you have other things to fix.
+
+# var x = 1;
+# var y = 0;
+
+# print true || (x/y == 0);
+# print false && (x/y == 0);''',
+
 # r"""var a int = 5.5;
 # const b = 10;
 # var i = { (b / 10) - 1; };
