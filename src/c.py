@@ -43,6 +43,7 @@ class Context:
 
     def type_transform(self, p_type: DType):
         match p_type:
+            case 'float': return 'double'
             case 'bool': return 'int'
             case 'unit': return 'int*'
             case _: return p_type
