@@ -83,7 +83,7 @@ class _NodeVisitor:
         insts = ''
 
         for inst in node.instructions:
-            insts += ' ' + self.visit(inst)
+            insts += ' ' + f'{self.visit(inst)}'
             if isinstance(inst, Expression): insts += ';'
 
         return f'{{{insts} }}'

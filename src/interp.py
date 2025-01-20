@@ -124,6 +124,7 @@ def _interpret_definition(node: VarDefinition | ConstDefinition, env: Env):
     if node.value:
         value = getLiteralFromExpr(node.value, env)
     else:
+        value = None
         dtype: DType = node.dtype
         match dtype:
             case 'int': value = Integer(node.lineno, None)
