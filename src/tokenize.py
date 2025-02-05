@@ -20,6 +20,8 @@ class WabbitLexer(Lexer):
         WHILE,
         TRUE,
         FALSE,
+        FUNC,
+        RETURN,
 
         # identificadores / nomes
         NAME,
@@ -47,6 +49,7 @@ class WabbitLexer(Lexer):
 
         # diversos
         ASSIGN,
+        SEMICOLUMN,
         SEMI,
         LPAREN,
         RPAREN,
@@ -71,6 +74,8 @@ class WabbitLexer(Lexer):
     NAME['while'] = WHILE
     NAME['true'] = TRUE
     NAME['false'] = FALSE
+    NAME['func'] = FUNC
+    NAME['return'] = RETURN
 
     FLOAT = r'[0-9]+\.[0-9]+'
     INTEGER = r'[0-9]+'
@@ -92,7 +97,8 @@ class WabbitLexer(Lexer):
     LNOT = r'!'
 
     ASSIGN = r'='
-    SEMI = r';'
+    SEMICOLUMN = r';'
+    SEMI = r','
     LPAREN = r'\('
     RPAREN = r'\)'
     LBRACE = r'\{'

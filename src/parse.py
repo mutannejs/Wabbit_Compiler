@@ -33,29 +33,29 @@ class WabbitParser(Parser):
        'while_statement',
        'break_statement',
        'continue_statement',
-       'expr SEMI',
+       'expr SEMICOLUMN',
        )
     def statement(self, p):
         return p[0]
 
-    @_('PRINT expr SEMI')
+    @_('PRINT expr SEMICOLUMN')
     def print_statement(self, p):
         return PrintStatement(p.lineno, p.expr)
 
-    @_('location ASSIGN expr SEMI')
+    @_('location ASSIGN expr SEMICOLUMN')
     def assignment_statement(self, p):
         return AssignmentStatement(p.lineno, p.location, p.expr)
 
-    @_('CONST location dtype ASSIGN expr SEMI',
-       'CONST location ASSIGN expr SEMI',
+    @_('CONST location dtype ASSIGN expr SEMICOLUMN',
+       'CONST location ASSIGN expr SEMICOLUMN',
        )
     def const_definition(self, p):
         dtype = p.dtype if hasattr(p, 'dtype') else None
         return ConstDefinition(p.lineno, p.location, p.expr, dtype)
 
-    @_('VAR location dtype ASSIGN expr SEMI',
-       'VAR location ASSIGN expr SEMI',
-       'VAR location dtype SEMI',
+    @_('VAR location dtype ASSIGN expr SEMICOLUMN',
+       'VAR location ASSIGN expr SEMICOLUMN',
+       'VAR location dtype SEMICOLUMN',
        )
     def variable_definition(self, p):
         dtype = p.dtype if hasattr(p, 'dtype') else None
@@ -74,11 +74,11 @@ class WabbitParser(Parser):
     def while_statement(self, p):
         return WhileStatement(p.lineno, p.expr, p.statements)
 
-    @_('BREAK SEMI')
+    @_('BREAK SEMICOLUMN')
     def break_statement(self, p):
         return Break(p.lineno)
 
-    @_('CONTINUE SEMI')
+    @_('CONTINUE SEMICOLUMN')
     def continue_statement(self, p):
         return Continue(p.lineno)
 

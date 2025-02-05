@@ -23,6 +23,8 @@ Compilador da linguagem **Wabbit**. Feito para a matéria Laboratório de Compil
 1. [X] tranformar o modelo, simplificando-o
 1. [X] compilar para wasm
 1. [ ] transformar o WabbitScript em WabbitFunc
+    1. [X] model extendido
+    1. [X] tokenize extendido
 1. [ ] coerção explícita
 1. [ ] implementar WabbitType
 

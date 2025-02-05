@@ -228,72 +228,52 @@ class CompoundExpression(Expression):
     def __repr__(self):
         return f'CompoundExpression( {self.instructions} )'
 
-# class Argument(Node):
-#     '''
-#     int a
-#     '''
-#     def __init__(self, dtype: DType, name: str): # type: ignore
-#         assert dtype in DataTypes
-#         assert isinstance(name, str)
-#         self.dtype = dtype
-#         self.name = name
+class FunctionParam():
+    '''
+    Example: a int
+    '''
+    def __init__(self, lineno: int, dtype: DType, name: str):
+        self.dtype = dtype
+        self.name = name
 
-#     def __repr__(self):
-#         return f'Argument({self.name}, {self.dtype})'
+    def __repr__(self):
+        return f'{self.name} {self.dtype}'
 
-# class ReturnStatement(Statement):
-#     '''
-#     return x + y
-#     '''
-#     def __init__(self, expr: Expression):
-#         assert isinstance(expr, Expression)
-#         self.value = expr
+class FunctionDefinition(Statement):
+    '''
+    Example: func main int {
+                return 0;
+             }
+    '''
+    def __init__(self, lineno: int, name: str, params: list[FunctionParam], ret: DType, body: BlockStatement):
+        super().__init__(lineno)
+        self.name = name
+        self.params = params
+        self.ret = ret
+        self.body = body
 
-#     def __repr__(self):
-#         return f'ReturnStatement({self.value})'
+    def __repr__(self):
+        return f'FunctionDefinition({self.name}, {self.params}, {self.ret}, {self.body})'
 
-# class FunctionDefinition(Definition):
-#     '''
-#     func add(x int, y int) int {
-#         return x + y;
-#     }
-#     '''
-#     def __init__(self, name: str, statements: BlockStatement, params: list[Argument] = None, typeReturn: DType = 'unit'): # type: ignore
-#         super().__init__().__init__(name)
-#         if params != None: assert isinstance(params, list)
-#         if params != None:
-#             for a in params: assert isinstance(a, Argument)
-#         assert typeReturn in DataTypes
-#         assert isinstance(statements, BlockStatement)
-#         self.statements = statements
-#         self.params = params
-#         self.typeReturn = typeReturn
+class FunctionCall(Expression):
+    '''
+    Example: foo(a, b);
+    '''
+    def __init__(self, lineno: int, name: str, args: list[Expression]):
+        super().__init__(lineno)
+        self.name = name
+        self.args = args
 
-#     def __repr__(self):
-#         return f'FunctionDefinition({self.name}, {self.params}, {self.statements}, {self.typeReturn})'
+    def __repr__(self):
+        return f'{self.name}({self.args})'
 
-# class FunctionApplication(Expression):
-#     '''
-#     mul(n, factorial(add(n, -1)));
-#     '''
-#     def __init__(self, name: str, args: list[Expression] = None):
-#         assert type(name) == str
-#         if args:
-#             assert isinstance(args, list)
-#             for a in args:
-#                 assert isinstance(a, Expression)
-#         self.name = name
-#         self.args = args
+class ReturnStatement(Statement):
+    '''
+    Example: return bar();
+    '''
+    def __init__(self, lineno: int, expr: Expression):
+        super().__init__(lineno)
+        self.expr = expr
 
-#     def __repr__(self):
-#         return f'FunctionApplication(\'{self.name}\', {self.args})'
-
-# class Program():
-#     def __init__(self, definitions: list[Statement]):
-#         assert isinstance(definitions, list)
-#         for d in definitions:
-#             assert isinstance(d, Statement)
-#         self.definitions = definitions
-
-#     def __repr__(self):
-#         return f'Program( {self.definitions} )'
+    def __repr__(self):
+        return f'ReturnStatement({self.expr})'
