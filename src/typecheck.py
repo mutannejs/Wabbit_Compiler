@@ -221,11 +221,13 @@ def _check_ifstatement(node: IfStatement, env: Env):
         error(node.lineno, f"if test must be bool. Got {cmp_type}")
 
     env.setTypeScope('if')
-    _check_blockstatement(node.block_if, env)
+    b_type = _check_blockstatement(node.block_if, env)
 
     if node.block_else:
         env.setTypeScope('else')
         _check_blockstatement(node.block_else, env)
+
+    node.p_type = b_type
 
 @rule(WhileStatement)
 def _check_whilestatement(node: WhileStatement, env: Env):
@@ -264,5 +266,12 @@ def _check_blockstatement(node: BlockStatement, env: Env):
 
     for inst in node.instructions:
         _check(inst, env)
+    
+    if isinstance(node.instructions[-1], LiteralT):
+        node.p_type = node.instructions[-1].p_type
+    else:
+        node.p_type = None
 
     env.popScope()
+
+    return node.p_type

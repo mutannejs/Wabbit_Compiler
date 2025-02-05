@@ -60,7 +60,9 @@ def _transform_binop(node: BinOp, ctx: Context):
 
     if not ( node.op in ['&&', '||'] and isinstance(left, Bool) ) and \
         ( not isinstance(left, LiteralT) or not isinstance(right, LiteralT) ):
-        return BinOp(node.lineno, node.op, left, right)
+        new_node = BinOp(node.lineno, node.op, left, right)
+        new_node.p_type = node.p_type
+        return new_node
 
     new_value = ''
     match node.op:
@@ -80,18 +82,30 @@ def _transform_binop(node: BinOp, ctx: Context):
             f'{repr(left.value)} or {repr(right.value)}'
 
     if node.op in ['<', '<=', '>', '>=', '==', '!=', '&&', '||']:
-        return Bool(node.lineno, eval(new_value))
+        new_node = Bool(node.lineno, eval(new_value))
     if isinstance(left, Integer):
-        return Integer(node.lineno, eval(new_value))
+        new_node = Integer(node.lineno, eval(new_value))
     if isinstance(left, Float):
-        return Float(node.lineno, eval(new_value))
+        new_node = Float(node.lineno, eval(new_value))
+
+    new_node.p_type = node.p_type
+    return new_node
 
 @rule(UnOp)
 def _transform_unop(node: UnOp, ctx: Context):
     expr = _transform(node.expr, ctx)
 
     if not isinstance(expr, LiteralT):
-        return UnOp(node.lineno, node.op, expr)
+        if (node.op in ['+', '-']):
+            return BinOp(
+                node.lineno,
+                node.op,
+                Integer(node.lineno, 0) if node.expr.p_type == 'int' else Float(node.lineno, 0),
+                node.expr
+            )
+        new_node = UnOp(node.lineno, node.op, expr)
+        new_node.p_type = node.p_type
+        return new_node
 
     if node.op == '-':
         new_value = f'-{expr.value}'
@@ -100,9 +114,13 @@ def _transform_unop(node: UnOp, ctx: Context):
     else:
         new_value = f'+{expr.value}'
 
-    if isinstance(expr, Integer): return Integer(node.lineno, eval(new_value))
-    if isinstance(expr, Float): return Float(node.lineno, eval(new_value))
-    if isinstance(expr, Bool): return Bool(node.lineno, eval(new_value))
+    if isinstance(expr, Integer): new_node = Integer(node.lineno, eval(new_value))
+    if isinstance(expr, Float): new_node = Float(node.lineno, eval(new_value))
+    if isinstance(expr, Bool): new_node = Bool(node.lineno, eval(new_value))
+
+    new_node.p_type = node.p_type
+
+    return new_node
 
 @rule(PrintStatement)
 def _transform_print_statement(node: PrintStatement, ctx: Context):

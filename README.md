@@ -21,9 +21,9 @@ Compilador da linguagem **Wabbit**. Feito para a matéria Laboratório de Compil
     1. [X] arrumar tipo booleano
     1. [X] implementar curto-circuito
 1. [X] tranformar o modelo, simplificando-o
+1. [X] compilar para wasm
+1. [ ] transformar o WabbitScript em WabbitFunc
 1. [ ] coerção explícita
-1. [ ] rever o modelo do WabbitFunc
-1. [ ] implementar o interp para WabbitFunc
 1. [ ] implementar WabbitType
 
 ### Execução

@@ -4,6 +4,7 @@ wabbit_compiler/
 build/
 examples/
 langc/
+wasm/
 src/sly.zip
 .teste.py
 run

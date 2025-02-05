@@ -4,11 +4,12 @@ from src.to_source import to_source
 from src.typecheck import check_program
 from src.interp import *
 from src.c import compile_program
-from src.trasnform import transform_program
+from src.transform import transform_program
+from src.generate import generate_program, encode_module
 
-from examples.examples_transform import examples
+from examples.examples_generate import examples
 
-# examples = []
+# examples = [ ]
 
 for i in range( len(examples[:]) ):
     ex = examples[i]
@@ -29,6 +30,13 @@ for i in range( len(examples[:]) ):
         print( res_tm )
         print( to_source(res_tm) )
 
+        mod = generate_program(res_ch)
+        wabbit_wasm = encode_module(mod.module)
+        print(wabbit_wasm)
+        with open('wasm/out.wasm', 'wb') as file:
+            file.write(wabbit_wasm)
+
+        print()
         interpret_program(res_tm)
 
         # res_co = compile_program(res_tm)
