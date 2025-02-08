@@ -1,11 +1,10 @@
 # type: ignore
-import sys
-sys.path.insert(0, 'sly.zip')
 from sly import Lexer
 
 class WabbitLexer(Lexer):
     tokens = {
         # bloco de comentário
+        # COMMENT,
         # COMMENTBLOCK,
         # UNCOMMENTBLOCK, # Unterminated comment block
 
@@ -49,8 +48,8 @@ class WabbitLexer(Lexer):
 
         # diversos
         ASSIGN,
-        SEMICOLUMN,
         SEMI,
+        SEMICOLUMN,
         LPAREN,
         RPAREN,
         LBRACE,
@@ -77,6 +76,12 @@ class WabbitLexer(Lexer):
     NAME['func'] = FUNC
     NAME['return'] = RETURN
 
+    # NAME['int'] = TYPE
+    # NAME['float'] = TYPE
+    # NAME['bool'] = TYPE
+    # NAME['char'] = TYPE
+    # NAME['unit'] = TYPE
+
     FLOAT = r'[0-9]+\.[0-9]+'
     INTEGER = r'[0-9]+'
     CHAR = r"'((.)|(\\x[0-9a-fA-F]{2})|(\\[abfnrtv]))'"
@@ -97,12 +102,12 @@ class WabbitLexer(Lexer):
     LNOT = r'!'
 
     ASSIGN = r'='
-    SEMICOLUMN = r';'
     SEMI = r','
+    SEMICOLUMN = r';'
     LPAREN = r'\('
     RPAREN = r'\)'
-    LBRACE = r'\{'
-    RBRACE = r'\}'
+    LBRACE = r'{'
+    RBRACE = r'}'
 
     def error(self, t):
         print("Illegal character '%s'" % t.value[0])

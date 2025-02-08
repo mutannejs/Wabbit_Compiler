@@ -7,9 +7,40 @@ from src.c import compile_program
 from src.transform import transform_program
 from src.generate import generate_program, encode_module
 
-from examples.examples_generate import examples
+# from examples.examples_generate import examples
 
-# examples = [ ]
+examples = [
+"""
+func add(x int, y int) int {
+    return x + y;
+}
+
+func mul(x int, y int) int {
+    return x * y;
+}
+
+func factorial(n int) int {
+    if n == 0 {
+        return 1;
+    } else {
+        return mul(n, factorial(add(n, -1)));
+    }
+}
+
+func print_factorials(last int) {
+    var x = 0;
+    while x < last {
+        print factorial(x);
+        x = add(x, 1);
+    }
+}
+
+func main() int {
+    var result = print_factorials(10);
+    return 0;
+}
+"""
+]
 
 for i in range( len(examples[:]) ):
     ex = examples[i]
@@ -23,7 +54,11 @@ for i in range( len(examples[:]) ):
 
     res = WabbitParser().parse( tokens )
     print( res, end='\n\n' )
+    # continue
+
     print( to_source(res) )
+    continue
+
     ok, res_ch = check_program(res)
     if ok:
         res_tm = transform_program(res_ch)

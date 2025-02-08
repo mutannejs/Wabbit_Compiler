@@ -1,5 +1,3 @@
-import sys
-sys.path.insert(0, 'sly.zip')
 from sly import Parser
 
 from .tokenize import WabbitLexer
@@ -17,6 +15,48 @@ class WabbitParser(Parser):
         ('left', UOP)
     )
 
+    @_('{ global_statement }')
+    def global_scope(self, p):
+        return p.global_statement
+
+    @_('variable_definition',
+       'const_definition',
+       'function_definition',
+       )
+    def global_statement(self, p):
+        return p[0]
+
+    @_('FUNC NAME LPAREN function_param RPAREN dtype LBRACE statements RBRACE',
+       'FUNC NAME LPAREN function_param RPAREN LBRACE statements RBRACE',
+       'FUNC NAME LPAREN RPAREN dtype LBRACE statements RBRACE',
+       'FUNC NAME LPAREN RPAREN LBRACE statements RBRACE',
+       )
+    def function_definition(self, p):
+        return FunctionDefinition(
+            p.lineno,
+            p.NAME,
+            p.function_param if hasattr(p, 'function_param') else [],
+            p.dtype if hasattr(p, 'dtype') else 'unit',
+            p.statements
+        )
+
+    @_('NAME dtype SEMI function_param',
+       'NAME dtype',
+       )
+    def function_param(self, p):
+        param = FunctionParam(
+            p.lineno,
+            p.dtype,
+            p.NAME
+        )
+
+        if hasattr(p, 'function_param'):
+            params = [param]
+            params.extend(p.function_param)
+            return params
+        else:
+            return [param]
+
     @_('{ statement }')
     def statements(self, p):
         return BlockStatement(0, p.statement)
@@ -31,8 +71,10 @@ class WabbitParser(Parser):
        'const_definition',
        'if_statement',
        'while_statement',
+       'function_call',
        'break_statement',
        'continue_statement',
+       'return_statement',
        'expr SEMICOLUMN',
        )
     def statement(self, p):
@@ -82,6 +124,31 @@ class WabbitParser(Parser):
     def continue_statement(self, p):
         return Continue(p.lineno)
 
+    @_('NAME LPAREN functioncall_argument RPAREN')
+    def function_call(self, p):
+        return FunctionCall(
+            p.lineno,
+            p.NAME,
+            p.functioncall_argument
+        )
+
+    @_('expr SEMI functioncall_argument',
+       'expr',
+       )
+    def functioncall_argument(self, p):
+        if hasattr(p, 'functioncall_argument'):
+            args = [p.expr]
+            args.extend(p.functioncall_argument)
+            return args
+        return [p.expr]
+
+    @_('RETURN expr SEMICOLUMN')
+    def return_statement(self, p):
+        return ReturnStatement(
+            p.lineno,
+            p.expr
+        )
+
     @_('expr LOR expr',
        'expr LAND expr',
        'expr LT expr',
@@ -100,6 +167,7 @@ class WabbitParser(Parser):
        'LPAREN expr RPAREN',
        'LBRACE compound_expression RBRACE',
        'literal',
+       'function_call',
        'location',
        )
     def expr(self, p):
@@ -110,6 +178,8 @@ class WabbitParser(Parser):
         elif len(p) == 3:
             return BinOp(p.lineno, p[1], p.expr0, p.expr1)
         else:
+            if hasattr(p, 'function_call'):
+                return p.function_call
             return UnOp(p.lineno, p[0], p.expr)
 
     @_('INTEGER',

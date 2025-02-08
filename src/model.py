@@ -241,7 +241,7 @@ class FunctionParam():
 
 class FunctionDefinition(Statement):
     '''
-    Example: func main int {
+    Example: func main() int {
                 return 0;
              }
     '''
