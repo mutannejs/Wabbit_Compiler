@@ -26,6 +26,8 @@ Compilador da linguagem **Wabbit**. Feito para a matéria Laboratório de Compil
     1. [X] model extendido
     1. [X] tokenize extendido
     1. [X] parse e to_source extendidos
+    1. [X] checktype extendido
+    1. [ ] corrigir emissão de erros no checktype
 1. [ ] coerção explícita
 1. [ ] implementar WabbitType
 

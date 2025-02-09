@@ -3,15 +3,15 @@ from functools import singledispatch
 from .model import *
 
 
-ScopeType = Literal["global", "while", "if", "else", "compoundexpression"]
+ScopeType = Literal["global", "function", "while", "if", "else", "compoundexpression"]
 
 
 class EnvRegister:
-    def __init__(self, mut: bool, dtype: DType):
+    def __init__(self, mut: bool, dtype: DType | tuple):
         self._mut = mut
         self._dtype = dtype
 
-    def setDtype(self, value: DType):
+    def setDtype(self, value: DType | tuple):
         self._dtype = value
 
 
@@ -19,22 +19,24 @@ class Env:
     def __init__(self):
         self.stack = [{}]
         self.scopes: list[ScopeType] = [ "global" ]
+        self.returnType: list[DType] = []
 
     def newScope(self):
         self.stack.insert(0, {})
 
-    def popScope(self):
+    def popScope(self, popScope: bool = True):
         self.stack.pop(0)
-        self.scopes.pop()
+        if popScope: self.scopes.pop()
 
-    def createRegister(self, name: str, mut: bool, dtype: DType):
+    def createRegister(self, name: str, mut: bool, dtype: DType | tuple):
         self.stack[0][name] = EnvRegister(mut, dtype)
 
-    def setRegister(self, name: str, dtype: DType):
+    def setRegister(self, name: str, dtype: DType | tuple):
         for i in range( len(self.stack) ):
             reg: EnvRegister = self.stack[i].get(name)
             if reg:
-                self.stack[i][name] = reg.setDtype(dtype)
+                reg.setDtype(dtype)
+                self.stack[i][name] = reg
                 break
 
     def isMutable(self, name) -> bool:
@@ -43,7 +45,7 @@ class Env:
             if reg:
                 return reg._mut
 
-    def getRegister(self, name: str, deep: int = -1) -> DType | None:
+    def getRegister(self, name: str, deep: int = -1) -> DType | tuple | None:
         length = deep if deep < len(self.stack) and deep > -1 else len(self.stack)
         for i in range( length ):
             reg: EnvRegister = self.stack[i].get(name)
@@ -61,6 +63,15 @@ class Env:
 
         return False
 
+    def clearReturnType(self):
+        self.returnType = []
+
+    def setReturnType(self, rtype: DType):
+        self.returnType.append(rtype)
+
+    def getReturnType(self):
+        return self.returnType
+
 
 has_errors = False
 
@@ -74,7 +85,8 @@ def check_program(model):
     
     has_errors = False
     env = Env()
-    _check(model, env)
+    for n in model:
+        _check(n, env)
     return not has_errors, model
 
 def _binops(left: DType, op: BinOpType, right: DType) -> DType | None:
@@ -158,8 +170,10 @@ def _check_unop(node: UnOp, env: Env):
 @rule(PrintStatement)
 def _check_print_statement(node: PrintStatement, env: Env):
     ty = _check(node.expr, env)
+    node.p_type = ty
+
     if ty not in [*DataTypes, None]:
-        error(node.lineno, f"Unsupported type {ty!r} with print")
+        error(node.lineno, f"Unsupported type {ty!r} with print")    
 
 @rule(Location)
 def _check_location(node: Location, env: Env):
@@ -202,6 +216,8 @@ def _check_definition(node: VarDefinition | ConstDefinition, env: Env):
 def _check_assignmentstatement(node: AssignmentStatement, env: Env):
     loc_type = _check(node.location, env)
     val_type = _check(node.value, env)
+
+    node.p_type = val_type
 
     has_error = False
     if not loc_type or not val_type:
@@ -275,3 +291,57 @@ def _check_blockstatement(node: BlockStatement, env: Env):
     env.popScope()
 
     return node.p_type
+
+@rule(FunctionParam)
+def _check_functionparam(node: FunctionParam, env: Env):
+    env.createRegister(node.name, True, node.dtype)
+    return (node.dtype, )
+
+@rule(FunctionDefinition)
+def _check_functiondefinition(node: FunctionDefinition, env: Env):
+    env.createRegister(node.name, False, ())
+
+    env.newScope()
+    env.setTypeScope('function')
+
+    dtype = ()
+    for p in node.params:
+        dtype += _check_functionparam(p, env)
+    dtype += (node.ret, )
+
+    env.setRegister(node.name, dtype)
+
+    _check_blockstatement(node.body, env)
+    ret_type = env.getReturnType()
+    env.clearReturnType()
+
+    for rt in ret_type:
+        if (node.ret != rt):
+            error(node.lineno, f"Type error in function return. {node.ret} != {rt}")
+
+    env.popScope(False)
+
+@rule(FunctionCall)
+def _check_functioncall(node: FunctionCall, env: Env):
+    function_type = env.getRegister(node.name)
+
+    argstype = ()
+    for a in node.args:
+        argstype += (_check(a, env),)
+
+    if (argstype != function_type[:-1]):
+        error(node.lineno, f"Type error in function params. {function_type[:-1]} != {argstype}")
+
+    node.p_type = function_type[-1]
+
+    return function_type[-1]
+
+@rule(ReturnStatement)
+def _check_returnstatement(node: ReturnStatement, env: Env):
+    dtype = 'unit'
+    if node.expr != None:
+        dtype = _check(node.expr, env)
+
+    env.setReturnType(dtype)
+
+    return dtype

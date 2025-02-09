@@ -21,9 +21,10 @@ class Expression(Node):
     pass
 
 class LiteralT(Expression):
-    def __init__(self, lineno: int, value):
+    def __init__(self, lineno: int, value, p_type):
         super().__init__(lineno)
         self.value = value
+        self.p_type = p_type
 
     def __repr__(self):
         return f'{self.value}'
@@ -32,15 +33,15 @@ class Integer(LiteralT):
     '''
     Example: 42
     '''
-    def __init__(self, lineno: int, value: int | None):
-        super().__init__(lineno, value)
+    def __init__(self, lineno: int, value: int | None, p_type: DType = None):
+        super().__init__(lineno, value, p_type)
 
 class Float(LiteralT):
     '''
     Example: 3.4
     '''
-    def __init__(self, lineno: int, value: float | None):
-        super().__init__(lineno, value)
+    def __init__(self, lineno: int, value: float | None, p_type: DType = None):
+        super().__init__(lineno, value, p_type)
 
 class Char(LiteralT):
     '''
@@ -48,8 +49,8 @@ class Char(LiteralT):
              'x\ff'
              '\n'
     '''
-    def __init__(self, lineno: int, value: str | None):
-        super().__init__(lineno, value)
+    def __init__(self, lineno: int, value: str | None, p_type: DType = None):
+        super().__init__(lineno, value, p_type)
 
     def __repr__(self):
         return f"{self.value}"
@@ -59,8 +60,8 @@ class Bool(LiteralT):
     Example: true
              false
     '''
-    def __init__(self, lineno: int, value: bool | None):
-        super().__init__(lineno, value)
+    def __init__(self, lineno: int, value: bool | None, p_type: DType = None):
+        super().__init__(lineno, value, p_type)
 
     def __repr__(self):
         return 'true' if self.value else 'false'
@@ -69,8 +70,8 @@ class Unit(LiteralT):
     '''
     Example: ()
     '''
-    def __init__(self, lineno: int, value = '()'):
-        super().__init__(lineno, '()')
+    def __init__(self, lineno: int, value: str | None, p_type: DType = None):
+        super().__init__(lineno, '()', p_type)
 
 class Break(Statement):
     '''
@@ -97,9 +98,10 @@ class PrintStatement(Statement):
     Example: print 'h'
              print 5 + 9
     '''
-    def __init__(self, lineno: int, expr: Expression):
+    def __init__(self, lineno: int, expr: Expression, p_type: DType = None):
         super().__init__(lineno)
         self.expr = expr
+        self.p_type = p_type
 
     def __repr__(self):
         return f'PrintStatement({ self.expr })'
@@ -109,10 +111,11 @@ class UnOp(Expression):
     Example: -5
              !expr
     '''
-    def __init__(self, lineno: int, op: UnOpType, expr: Expression):
+    def __init__(self, lineno: int, op: UnOpType, expr: Expression, p_type: DType = None):
         super().__init__(lineno)
         self.op = op
         self.expr = expr
+        self.p_type = p_type
 
     def __repr__(self):
         return f'UnOp({self.op}, {self.expr})'
@@ -122,11 +125,12 @@ class BinOp(Expression):
     Example: 3 + 4
              a < 100.0
     '''
-    def __init__(self, lineno: int, op: BinOpType, left: Expression, right: Expression):
+    def __init__(self, lineno: int, op: BinOpType, left: Expression, right: Expression, p_type: DType = None):
         super().__init__(lineno)
         self.op = op
         self.left = left
         self.right = right
+        self.p_type = p_type
 
     def __repr__(self):
         return f'BinOp({self.op}, {self.left}, {self.right})'
@@ -136,9 +140,10 @@ class Location(Expression):
     Example: a
              loc
     '''
-    def __init__(self, lineno: int, name: str):
+    def __init__(self, lineno: int, name: str, p_type: DType = None):
         super().__init__(lineno)
         self.name = name
+        self.p_type = p_type
 
     def __repr__(self):
         return self.name
@@ -173,10 +178,11 @@ class AssignmentStatement(Statement):
     '''
     Example: r = 2.0;
     '''
-    def __init__(self, lineno: int, location: Location, value: Expression):
+    def __init__(self, lineno: int, location: Location, value: Expression, p_type: DType = None):
         super().__init__(lineno)
         self.location = location
         self.value = value
+        self.p_type = p_type
 
     def __repr__(self):
         return f'AssignmentStatement({self.location}, {self.value})'
@@ -185,9 +191,10 @@ class BlockStatement(Node):
     '''
     Example: a = 1; a = 2;
     '''
-    def __init__(self, lineno: int, instructions: list):
+    def __init__(self, lineno: int, instructions: list, p_type: DType = None):
         super().__init__(lineno)
         self.instructions = instructions
+        self.p_type = p_type
 
     def __repr__(self):
         return f'BlockStatement( { self.instructions } )'
@@ -196,9 +203,10 @@ class IfStatement(Statement):
     '''
     Example: if a > 0.0 { print a; } else { print -a; }
     '''
-    def __init__(self, lineno: int, cmp: Expression, block_if: BlockStatement, block_else: BlockStatement = None):
+    def __init__(self, lineno: int, cmp: Expression, block_if: BlockStatement, block_else: BlockStatement = None, p_type: DType = None):
         super().__init__(lineno)
         self.cmp = cmp
+        self.p_type = p_type
         self.block_if = block_if
         self.block_else = block_else
 
@@ -221,9 +229,10 @@ class CompoundExpression(Expression):
     '''
     Example: { var t = y; y = x; t; };
     '''
-    def __init__(self, lineno: int, instructions: list):
+    def __init__(self, lineno: int, instructions: list, p_type: DType = None):
         super().__init__(lineno)
         self.instructions = instructions
+        self.p_type = p_type
 
     def __repr__(self):
         return f'CompoundExpression( {self.instructions} )'
@@ -259,10 +268,11 @@ class FunctionCall(Expression):
     '''
     Example: foo(a, b);
     '''
-    def __init__(self, lineno: int, name: str, args: list[Expression]):
+    def __init__(self, lineno: int, name: str, args: list[Expression], p_type: DType = None):
         super().__init__(lineno)
         self.name = name
         self.args = args
+        self.p_type = p_type
 
     def __repr__(self):
         return f'{self.name}({self.args})'
@@ -271,9 +281,10 @@ class ReturnStatement(Statement):
     '''
     Example: return bar();
     '''
-    def __init__(self, lineno: int, expr: Expression):
+    def __init__(self, lineno: int, expr: Expression | None, p_type: DType = None):
         super().__init__(lineno)
         self.expr = expr
+        self.p_type = p_type
 
     def __repr__(self):
         return f'ReturnStatement({self.expr})'

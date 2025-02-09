@@ -44,18 +44,14 @@ class WabbitParser(Parser):
        'NAME dtype',
        )
     def function_param(self, p):
-        param = FunctionParam(
+        params = [ FunctionParam(
             p.lineno,
             p.dtype,
             p.NAME
-        )
-
+        )]
         if hasattr(p, 'function_param'):
-            params = [param]
             params.extend(p.function_param)
-            return params
-        else:
-            return [param]
+        return params
 
     @_('{ statement }')
     def statements(self, p):
@@ -142,11 +138,12 @@ class WabbitParser(Parser):
             return args
         return [p.expr]
 
-    @_('RETURN expr SEMICOLUMN')
+    @_('RETURN expr SEMICOLUMN',
+       'RETURN SEMICOLUMN')
     def return_statement(self, p):
         return ReturnStatement(
             p.lineno,
-            p.expr
+            p.expr if hasattr(p, 'expr') else None
         )
 
     @_('expr LOR expr',
