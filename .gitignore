@@ -5,6 +5,5 @@ build/
 examples/
 langc/
 wasm/
-src/sly.zip
-.teste.py
+temps/
 run

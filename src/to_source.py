@@ -2,7 +2,7 @@ from .model import *
 
 class _NodeVisitor:
     def __init__(self):
-        self.tabs = -1
+        self.tabs = 0
 
     def visit(self, node: Node):
         methname = node.__class__.__name__
@@ -89,9 +89,7 @@ class _NodeVisitor:
         return f'{{{insts} }}'
 
     def visit_FunctionDefinition(self, node: FunctionDefinition):
-        self.tabs += 1
         body = self.visit_BlockStatement(node.body)
-        self.tabs -= 1
 
         params = ''
         if len(node.params) == 0:
@@ -116,7 +114,7 @@ class _NodeVisitor:
             args = self.visit(node.args[0])
         else:
             for a in node.args[:-1]:
-                args += self.visit(a) + ', '
+                args += f'{self.visit(a)}' + ', '
             args += f'{self.visit(node.args[-1])}'
         return f'{node.name}({args})'
 
@@ -125,7 +123,7 @@ class _NodeVisitor:
 
 
 def to_source(model):
-    code = ''
+    codes = []
     for node in model:
-        code += _NodeVisitor().visit(node) + '\n\n'
-    return code
+        codes.append( _NodeVisitor().visit(node) )
+    return '\n'.join(codes) + '\n'

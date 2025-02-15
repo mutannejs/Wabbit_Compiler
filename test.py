@@ -11,7 +11,7 @@ from examples.examples_function import examples
 
 # examples = [ ]
 
-for i in range( len(examples[:]) ):
+for i in range( len(examples[:3]) ):
     ex = examples[i]
 
     print(f'\n\n========= Exemplo {i} =========')
@@ -28,6 +28,9 @@ for i in range( len(examples[:]) ):
     print( to_source(res) )
     # continue
 
+    interpret_program(res)
+    continue
+
     ok, res_ch = check_program(res)
     continue
 
@@ -35,15 +38,13 @@ for i in range( len(examples[:]) ):
         res_tm = transform_program(res_ch)
         print( res_tm )
         print( to_source(res_tm) )
+        continue
 
         mod = generate_program(res_ch)
         wabbit_wasm = encode_module(mod.module)
         print(wabbit_wasm)
         with open('wasm/out.wasm', 'wb') as file:
             file.write(wabbit_wasm)
-
-        print()
-        interpret_program(res_tm)
 
         # res_co = compile_program(res_tm)
         # f = open(f"langc/test{i}.c", 'x+')

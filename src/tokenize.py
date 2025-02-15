@@ -48,8 +48,8 @@ class WabbitLexer(Lexer):
 
         # diversos
         ASSIGN,
+        COMMA,
         SEMI,
-        SEMICOLUMN,
         LPAREN,
         RPAREN,
         LBRACE,
@@ -102,8 +102,8 @@ class WabbitLexer(Lexer):
     LNOT = r'!'
 
     ASSIGN = r'='
-    SEMI = r','
-    SEMICOLUMN = r';'
+    COMMA = r','
+    SEMI = r';'
     LPAREN = r'\('
     RPAREN = r'\)'
     LBRACE = r'{'

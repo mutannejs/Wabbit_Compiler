@@ -70,7 +70,7 @@ class Unit(LiteralT):
     '''
     Example: ()
     '''
-    def __init__(self, lineno: int, value: str | None, p_type: DType = None):
+    def __init__(self, lineno: int, value: str = None, p_type: DType = None):
         super().__init__(lineno, '()', p_type)
 
 class Break(Statement):
@@ -237,11 +237,12 @@ class CompoundExpression(Expression):
     def __repr__(self):
         return f'CompoundExpression( {self.instructions} )'
 
-class FunctionParam():
+class FunctionParam(Node):
     '''
     Example: a int
     '''
     def __init__(self, lineno: int, dtype: DType, name: str):
+        super().__init__(lineno)
         self.dtype = dtype
         self.name = name
 

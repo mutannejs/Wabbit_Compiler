@@ -5,12 +5,23 @@ from .model import *
 class Env:
     def __init__(self):
         self.stack = [{}]
+        self.global_vars = {}
+        self.registers = []
+        self.functions = {}
+        self.returnValue = []
 
     def newScope(self):
         self.stack.insert(0, {})
 
     def popScope(self):
         self.stack.pop(0)
+
+    def pushRegister(self):
+        self.registers.append( self.stack )
+        self.stack = [{}]
+
+    def popRegister(self):
+        self.stack = self.registers.pop()
 
     def createRegister(self, name: str, data: Node | None):
         self.stack[0][name] = data
@@ -25,16 +36,24 @@ class Env:
         for i in range( len(self.stack) ):
             reg = self.stack[i].get(name)
             if reg: return reg
+        return self.global_vars.get(name)
 
 
-def interpret_program(model: Node):
+def interpret_program(model: list[Node]):
     env = Env()
 
-    if not isinstance(model, BlockStatement) and isinstance(model, Statement):
-        model = BlockStatement([ model ])
+    for s in model:
+        _interpret(s, env)
 
-    _interpret(model, env)
+        for key in list(env.stack[0]):
+            env.global_vars[key] = env.stack[0].get(key)
+        env.stack[0] = {}
 
+    (_, main) = env.functions['main']
+
+    getLiteralFromExpr(main, env)
+    resp = env.returnValue.pop().value
+    return resp
 
 inf_int = 2147483647
 inf_float = 1.7e+308
@@ -124,7 +143,6 @@ def _interpret_definition(node: VarDefinition | ConstDefinition, env: Env):
     if node.value:
         value = getLiteralFromExpr(node.value, env)
     else:
-        value = None
         dtype: DType = node.dtype
         match dtype:
             case 'int': value = Integer(node.lineno, None)
@@ -147,11 +165,13 @@ def _interpret_blockstatement(node: BlockStatement, env: Env):
 
     for inst in node.instructions:
         resp = _interpret(inst, env)
-        if isinstance(resp, Break) or isinstance(resp, Continue):
+        if isinstance(resp, Break) or \
+                isinstance(resp, Continue) or \
+                isinstance(resp, ReturnStatement):
             break
 
     env.popScope()
-    return resp
+    return resp if resp else Unit(node.lineno)
 
 @rule(IfStatement)
 def _interpret_Ifstatement(node: IfStatement, env: Env):
@@ -169,9 +189,10 @@ def _interpret_whilestatement(node: WhileStatement, env: Env):
     cmp = getLiteralFromExpr(node.cmp, env)
     while _interpret(cmp, env):
         resp = _interpret_blockstatement(node.body, env)
-        if isinstance(resp, Break): break
+        if isinstance(resp, Break) or isinstance(resp, ReturnStatement): break
         if isinstance(resp, Continue): continue
         cmp = getLiteralFromExpr(node.cmp, env)
+    return resp if isinstance(resp, ReturnStatement) else None
 
 @rule(CompoundExpression)
 def _interpret_compoundexpression(node: CompoundExpression, env: Env):
@@ -185,38 +206,53 @@ def _interpret_compoundexpression(node: CompoundExpression, env: Env):
     env.popScope()
     return expr
 
-# @rule(Argument)
-# def _interpret_argument(node: Argument, env: Env) -> DeclarationVar:
-#     return DeclarationVar(
-#         Location(node.name),
-#         dtype = node.dtype
-#     )
+@rule(FunctionParam)
+def _interpret_functionparam(node: FunctionParam, env: Env):
+    return (node.name, node.dtype)
 
-# @rule(ReturnStatement)
-# def _interpret_returnstatement(node: ReturnStatement, env: Env):
-#     return _getValue(node.value, env)
+@rule(FunctionDefinition)
+def _interpret_functiondefinition(node: FunctionDefinition, env: Env):
+    params = []
+    for p in node.params:
+        params.append( _interpret_functionparam(p, env) )
 
-# @rule(FunctionDefinition)
-# def _interpret_functiondefinition(node: FunctionDefinition, env: Env):
-#     env.addDefinition(node)
+    function = node.body
+    env.functions[node.name] = (params, function)
 
-# @rule(FunctionApplication)
-# def _interpret_functionapplication(node: FunctionApplication, env: Env):
-#     resp = None
-#     func: FunctionDefinition = env.getDefinition(node.name)
+@rule(FunctionCall)
+def _interpret_functioncall(node: FunctionCall, env: Env):
+    (params, function) = env.functions[node.name]
+    lin = node.lineno
 
-#     if func.params:
-#         for i in range(len(func.params)):
-#             param = _interpret_argument(func.params[i], env)
-#             param.value = node.args[i]
-#             func.statements.statements.insert(0, param)
-#             print(func.statements.statements[0])
+    args_interp = []
+    for i in range( len(params) ):
+        (name, dtype) = params[i]
+        args_interp.append(
+            VarDefinition(
+                lin,
+                Location(lin, name, dtype),
+                getLiteralFromExpr(node.args[i], env),
+                dtype
+            )
+        )
 
-#     resp = _interpret_blockstatement(func.statements, env)
-#     return resp if func.typeReturn != 'unit' else Unit().value
+    env.pushRegister()
 
-# @rule(Program)
-# def _interpret_program(node: Program, env: Env):
-#     for d in node.declarations:
-#         _interpret(d, env)
-#     _interpret_functionapplication(FunctionApplication('main'), env)
+    args_interp.extend(function.instructions)
+    function_body = BlockStatement(lin, args_interp)
+    resp = _interpret_blockstatement(function_body, env)
+
+    env.popRegister()
+
+    if isinstance(resp, ReturnStatement):
+        resp = env.returnValue.pop()
+    else:
+        resp = Unit(node.lineno)
+
+    return resp
+
+@rule(ReturnStatement)
+def _interpret_ReturnStatement(node: ReturnStatement, env: Env):
+    ret_literal = getLiteralFromExpr(node.expr, env)
+    env.returnValue.append(ret_literal)
+    return node

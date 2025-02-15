@@ -15,16 +15,9 @@ class WabbitParser(Parser):
         ('left', UOP)
     )
 
-    @_('{ global_statement }')
+    @_('{ statement }')
     def global_scope(self, p):
-        return p.global_statement
-
-    @_('variable_definition',
-       'const_definition',
-       'function_definition',
-       )
-    def global_statement(self, p):
-        return p[0]
+        return p.statement
 
     @_('FUNC NAME LPAREN function_param RPAREN dtype LBRACE statements RBRACE',
        'FUNC NAME LPAREN function_param RPAREN LBRACE statements RBRACE',
@@ -40,7 +33,7 @@ class WabbitParser(Parser):
             p.statements
         )
 
-    @_('NAME dtype SEMI function_param',
+    @_('NAME dtype COMMA function_param',
        'NAME dtype',
        )
     def function_param(self, p):
@@ -67,33 +60,33 @@ class WabbitParser(Parser):
        'const_definition',
        'if_statement',
        'while_statement',
-       'function_call',
        'break_statement',
        'continue_statement',
        'return_statement',
-       'expr SEMICOLUMN',
+       'expr SEMI',
+       'function_definition'
        )
     def statement(self, p):
         return p[0]
 
-    @_('PRINT expr SEMICOLUMN')
+    @_('PRINT expr SEMI')
     def print_statement(self, p):
         return PrintStatement(p.lineno, p.expr)
 
-    @_('location ASSIGN expr SEMICOLUMN')
+    @_('location ASSIGN expr SEMI')
     def assignment_statement(self, p):
         return AssignmentStatement(p.lineno, p.location, p.expr)
 
-    @_('CONST location dtype ASSIGN expr SEMICOLUMN',
-       'CONST location ASSIGN expr SEMICOLUMN',
+    @_('CONST location dtype ASSIGN expr SEMI',
+       'CONST location ASSIGN expr SEMI',
        )
     def const_definition(self, p):
         dtype = p.dtype if hasattr(p, 'dtype') else None
         return ConstDefinition(p.lineno, p.location, p.expr, dtype)
 
-    @_('VAR location dtype ASSIGN expr SEMICOLUMN',
-       'VAR location ASSIGN expr SEMICOLUMN',
-       'VAR location dtype SEMICOLUMN',
+    @_('VAR location dtype ASSIGN expr SEMI',
+       'VAR location ASSIGN expr SEMI',
+       'VAR location dtype SEMI',
        )
     def variable_definition(self, p):
         dtype = p.dtype if hasattr(p, 'dtype') else None
@@ -112,23 +105,25 @@ class WabbitParser(Parser):
     def while_statement(self, p):
         return WhileStatement(p.lineno, p.expr, p.statements)
 
-    @_('BREAK SEMICOLUMN')
+    @_('BREAK SEMI')
     def break_statement(self, p):
         return Break(p.lineno)
 
-    @_('CONTINUE SEMICOLUMN')
+    @_('CONTINUE SEMI')
     def continue_statement(self, p):
         return Continue(p.lineno)
 
-    @_('NAME LPAREN functioncall_argument RPAREN')
+    @_('NAME LPAREN functioncall_argument RPAREN',
+       'NAME LPAREN RPAREN'
+       )
     def function_call(self, p):
         return FunctionCall(
             p.lineno,
             p.NAME,
-            p.functioncall_argument
+            p.functioncall_argument if hasattr(p, 'functioncall_argument') else []
         )
 
-    @_('expr SEMI functioncall_argument',
+    @_('expr COMMA functioncall_argument',
        'expr',
        )
     def functioncall_argument(self, p):
@@ -138,8 +133,8 @@ class WabbitParser(Parser):
             return args
         return [p.expr]
 
-    @_('RETURN expr SEMICOLUMN',
-       'RETURN SEMICOLUMN')
+    @_('RETURN expr SEMI',
+       'RETURN SEMI')
     def return_statement(self, p):
         return ReturnStatement(
             p.lineno,
@@ -168,15 +163,13 @@ class WabbitParser(Parser):
        'location',
        )
     def expr(self, p):
-        if hasattr(p, 'literal') or hasattr(p, 'location'):
+        if hasattr(p, 'literal') or hasattr(p, 'location') or hasattr(p, 'function_call'):
             return p[0]
         elif hasattr(p, 'LPAREN') or hasattr(p, 'LBRACE'):
             return p[1]
         elif len(p) == 3:
             return BinOp(p.lineno, p[1], p.expr0, p.expr1)
         else:
-            if hasattr(p, 'function_call'):
-                return p.function_call
             return UnOp(p.lineno, p[0], p.expr)
 
     @_('INTEGER',

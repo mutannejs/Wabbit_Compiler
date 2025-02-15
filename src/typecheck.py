@@ -19,7 +19,10 @@ class Env:
     def __init__(self):
         self.stack = [{}]
         self.scopes: list[ScopeType] = [ "global" ]
-        self.returnType: list[DType] = []
+        self.functions = {}
+        self.returnType = None
+        self.returnLineno = None
+        self.expectRetType = None
 
     def newScope(self):
         self.stack.insert(0, {})
@@ -50,7 +53,7 @@ class Env:
         for i in range( length ):
             reg: EnvRegister = self.stack[i].get(name)
             if reg:
-                return reg._dtype
+                return reg._dtype, True
             
     def setTypeScope(self, value: ScopeType):
         self.scopes.append(value)
@@ -60,18 +63,31 @@ class Env:
         for i in range( length ):
             if self.scopes[length - i] == "while":
                 return True
-
         return False
 
-    def clearReturnType(self):
-        self.returnType = []
+    def getInFunction(self):
+        length = len(self.scopes) - 1
+        for i in range( length ):
+            if self.scopes[length - i] == "function":
+                return True
+        return False
 
-    def setReturnType(self, rtype: DType):
-        self.returnType.append(rtype)
+    def setReturnType(self, rtype: DType, lineno: int):
+        self.returnType = rtype
+        self.returnLineno = lineno
 
     def getReturnType(self):
-        return self.returnType
+        rt = self.returnType
+        rl = self.returnLineno
+        self.returnType = None
+        self.returnLineno = None
+        return rt, rl
 
+    def setFunction(self, name, dtype):
+        self.functions[name] = dtype
+
+    def getFunction(self, name):
+        return self.functions.get(name)
 
 has_errors = False
 
@@ -119,6 +135,12 @@ def _unops(op: BinOpType, expr: DType) -> DType | None:
             if op in ['!']: return 'bool'
 
     return None
+
+def _dtype(dtype: DType) -> DType | None:
+    if dtype in ['int', 'float', 'char', 'bool', 'unit']:
+        return dtype
+    else:
+        return None
 
 @singledispatch
 def _check(node: Node, env: Env):
@@ -177,13 +199,13 @@ def _check_print_statement(node: PrintStatement, env: Env):
 
 @rule(Location)
 def _check_location(node: Location, env: Env):
-    ty = env.getRegister(node.name)
-    if not ty:
+    register = env.getRegister(node.name)
+    if not register:
         error(node.lineno, f"{node.name} not defined!")
 
-    node.p_type = ty
+    node.p_type = register[0] if register else None
 
-    return ty
+    return node.p_type
 
 @rule(VarDefinition)
 @rule(ConstDefinition)
@@ -206,6 +228,9 @@ def _check_definition(node: VarDefinition | ConstDefinition, env: Env):
 
     if not dtype:
         has_error = True
+    elif not _dtype(dtype):
+        error(node.lineno, f'{dtype} is not a valid type')
+        has_error = True
 
     if not has_error and node.value and node.dtype and dtype != node.dtype:
         error(node.lineno, f"Type error in initialization. {node.dtype} != {dtype}")
@@ -220,9 +245,6 @@ def _check_assignmentstatement(node: AssignmentStatement, env: Env):
     node.p_type = val_type
 
     has_error = False
-    if not loc_type or not val_type:
-        has_error = True
-
     if not has_error and not env.isMutable(node.location.name):
         error(node.lineno, "Can't assign to const")
         has_error = True
@@ -233,7 +255,7 @@ def _check_assignmentstatement(node: AssignmentStatement, env: Env):
 @rule(IfStatement)
 def _check_ifstatement(node: IfStatement, env: Env):
     cmp_type = _check(node.cmp, env)
-    if cmp_type and cmp_type != 'bool':
+    if cmp_type != 'bool':
         error(node.lineno, f"if test must be bool. Got {cmp_type}")
 
     env.setTypeScope('if')
@@ -280,15 +302,21 @@ def _check_compoundexpression(node: CompoundExpression, env: Env):
 def _check_blockstatement(node: BlockStatement, env: Env):
     env.newScope()
 
+    has_error = False
     for inst in node.instructions:
         _check(inst, env)
-    
+
+        ret_type, ret_lineno = env.getReturnType()
+        if not has_error and ret_lineno and ret_type != env.expectRetType:
+            error(ret_lineno, f"Type error in return")
+            has_error = True
+
     if isinstance(node.instructions[-1], LiteralT):
         node.p_type = node.instructions[-1].p_type
     else:
         node.p_type = None
 
-    env.popScope()
+    env.popScope(False)
 
     return node.p_type
 
@@ -299,7 +327,13 @@ def _check_functionparam(node: FunctionParam, env: Env):
 
 @rule(FunctionDefinition)
 def _check_functiondefinition(node: FunctionDefinition, env: Env):
-    env.createRegister(node.name, False, ())
+    if not _dtype(node.ret):
+        error(node.lineno, f'{node.ret} is not a valid type')
+        return
+
+    if env.getInFunction():
+        error(node.lineno, f'Nested functions are not supported')
+        return
 
     env.newScope()
     env.setTypeScope('function')
@@ -309,39 +343,57 @@ def _check_functiondefinition(node: FunctionDefinition, env: Env):
         dtype += _check_functionparam(p, env)
     dtype += (node.ret, )
 
-    env.setRegister(node.name, dtype)
+    env.expectRetType = node.ret
+    env.setFunction(node.name, dtype)
 
     _check_blockstatement(node.body, env)
-    ret_type = env.getReturnType()
-    env.clearReturnType()
 
-    for rt in ret_type:
-        if (node.ret != rt):
-            error(node.lineno, f"Type error in function return. {node.ret} != {rt}")
-
-    env.popScope(False)
+    env.popScope()
+    env.expectRetType = None
 
 @rule(FunctionCall)
 def _check_functioncall(node: FunctionCall, env: Env):
-    function_type = env.getRegister(node.name)
+    function_type = env.getFunction(node.name)
+
+    has_error = False
+    if not function_type:
+        error(node.lineno, f'{node.name} not defined!')
+        has_error = True
+
+    if has_error: return None
+    
+    function_type = function_type
+    params_type = function_type[:-1]
+    return_type = function_type[-1]
 
     argstype = ()
     for a in node.args:
         argstype += (_check(a, env),)
 
-    if (argstype != function_type[:-1]):
-        error(node.lineno, f"Type error in function params. {function_type[:-1]} != {argstype}")
+    if len(params_type) != len(argstype):
+        error(node.lineno, f"Wrong # arguments. Expected {len(params_type)}.")
+        has_error = True
 
-    node.p_type = function_type[-1]
+    if not has_error:
+        for i in range( len(params_type) ):
+            if params_type[i] != argstype[i]:
+                error(node.lineno, f"Type error in argument {i+1}. Expected {params_type[i]}")
+                break
 
-    return function_type[-1]
+    node.p_type = return_type
+
+    return return_type
 
 @rule(ReturnStatement)
 def _check_returnstatement(node: ReturnStatement, env: Env):
+    if not env.getInFunction():
+        error(node.lineno, 'Return used outside of function')
+        return None
+
     dtype = 'unit'
     if node.expr != None:
         dtype = _check(node.expr, env)
 
-    env.setReturnType(dtype)
+    env.setReturnType(dtype, node.lineno)
 
     return dtype
